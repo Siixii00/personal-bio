@@ -916,4 +916,29 @@ function generateExportJS() {
 });`;
 }
 
-document.addEventListener('DOMContentLoaded', init);
+window.addNavItem = addNavItem;
+window.editNavItem = editNavItem;
+window.deleteNavItem = deleteNavItem;
+window.openBlockLibrary = openBlockLibrary;
+window.closeBlockLibrary = closeBlockLibrary;
+window.addBlock = addBlock;
+window.editBlock = editBlock;
+window.closeBlockSettings = closeBlockSettings;
+window.saveBlockSettings = saveBlockSettings;
+window.addProjectToBlock = addProjectToBlock;
+window.addLinkToBlock = addLinkToBlock;
+window.deleteBlock = deleteBlock;
+window.toggleBlockVisibility = toggleBlockVisibility;
+window.openSettingsModal = openSettingsModal;
+window.closeSettingsModal = closeSettingsModal;
+window.saveGlobalSettings = saveGlobalSettings;
+window.previewGlobalImage = previewGlobalImage;
+window.togglePreview = togglePreview;
+window.exportPackage = exportPackage;
+window.initDragDrop = initDragDrop;
+
+window.addEventListener('DOMContentLoaded', init);
+
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    init();
+}
