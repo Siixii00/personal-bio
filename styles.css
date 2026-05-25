@@ -1,5 +1,4 @@
 body {
-    background-image: url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&q=80');
     background-size: cover;
     background-attachment: fixed;
     background-repeat: no-repeat;
@@ -28,30 +27,24 @@ body {
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
-.active-interaction:active {
-    transform: scale(0.98);
-    transition: transform 0.1s ease;
+.nav-item-editor,
+.block-item-editor {
+    transition: all 0.2s ease;
 }
 
-#settings-modal input[type="text"],
-#settings-modal input[type="url"],
-#settings-modal input[type="email"],
-#settings-modal textarea,
-#settings-modal select {
-    font-size: 14px;
+.nav-item-editor:hover,
+.block-item-editor:hover {
+    background-color: #eae8e3;
 }
 
-#settings-modal input[type="color"] {
-    -webkit-appearance: none;
-    border: none;
-    padding: 0;
+[draggable="true"] {
+    user-select: none;
 }
 
-#settings-modal input[type="color"]::-webkit-color-swatch-wrapper {
-    padding: 0;
+section {
+    transition: all 0.2s ease;
 }
 
-#settings-modal input[type="color"]::-webkit-color-swatch {
-    border: none;
-    border-radius: 6px;
+section:hover {
+    box-shadow: 0 0 0 2px rgba(23, 24, 24, 0.1);
 }

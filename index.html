@@ -3,96 +3,38 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>[YOUR_NAME] | Personal Bio</title>
+    <title>Personal Bio Editor</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Serif:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif:wght@400;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
     <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
                     "colors": {
-                        "on-tertiary-fixed-variant": "#4a473e",
                         "surface-variant": "#e4e2dd",
                         "surface-container-high": "#eae8e3",
-                        "surface-tint": "#5f5e5e",
                         "background": "#fbf9f4",
                         "on-secondary": "#ffffff",
-                        "tertiary-fixed-dim": "#cbc6ba",
-                        "secondary-fixed-dim": "#d0c5b6",
-                        "on-primary-fixed-variant": "#474747",
                         "surface-dim": "#dbdad5",
                         "primary": "#171818",
-                        "error-container": "#ffdad6",
                         "surface-container-lowest": "#ffffff",
                         "outline": "#747878",
-                        "on-tertiary": "#ffffff",
-                        "on-background": "#1b1c19",
-                        "on-secondary-fixed": "#201b12",
-                        "tertiary-container": "#2e2c24",
                         "on-surface": "#1b1c19",
                         "surface-container-low": "#f5f3ee",
                         "outline-variant": "#c4c7c7",
                         "surface-container-highest": "#e4e2dd",
-                        "inverse-surface": "#30312e",
-                        "tertiary-fixed": "#e8e2d6",
-                        "primary-fixed-dim": "#c8c6c5",
-                        "on-error": "#ffffff",
-                        "secondary-fixed": "#ece1d2",
-                        "inverse-primary": "#c8c6c5",
-                        "on-secondary-fixed-variant": "#4d463b",
-                        "primary-fixed": "#e4e2e1",
-                        "on-primary": "#ffffff",
-                        "surface-bright": "#fbf9f4",
-                        "on-surface-variant": "#444748",
-                        "on-tertiary-fixed": "#1e1c14",
                         "secondary-container": "#eadecf",
-                        "on-primary-fixed": "#1b1c1c",
                         "on-secondary-container": "#696155",
                         "secondary": "#655d51",
-                        "on-tertiary-container": "#979388",
-                        "error": "#ba1a1a",
-                        "tertiary": "#191710",
+                        "on-surface-variant": "#444748",
                         "surface-container": "#f0eee9",
                         "surface": "#fbf9f4",
-                        "on-error-container": "#93000a",
-                        "on-primary-container": "#949393",
-                        "inverse-on-surface": "#f2f1ec",
                         "primary-container": "#2c2c2c"
                     },
-                    "borderRadius": {
-                        "DEFAULT": "0.25rem",
-                        "lg": "0.5rem",
-                        "xl": "0.75rem",
-                        "full": "9999px"
-                    },
-                    "spacing": {
-                        "margin-desktop": "64px",
-                        "container-max": "1200px",
-                        "gutter": "24px",
-                        "unit": "8px",
-                        "margin-mobile": "20px"
-                    },
-                    "fontFamily": {
-                        "label-md": ["Inter"],
-                        "label-sm": ["Inter"],
-                        "body-md": ["Noto Serif"],
-                        "title-md": ["Noto Serif"],
-                        "body-lg": ["Noto Serif"],
-                        "headline-lg": ["Noto Serif"],
-                        "display-lg": ["Noto Serif"]
-                    },
-                    "fontSize": {
-                        "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500"}],
-                        "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
-                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
-                        "title-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
-                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
-                        "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
-                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
-                    }
+                    "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                    "spacing": { "margin-desktop": "64px", "container-max": "1200px", "gutter": "24px", "unit": "8px", "margin-mobile": "20px" }
                 },
             },
         }
@@ -102,464 +44,213 @@
 <body class="font-body-md text-on-surface">
     <div class="grain-overlay"></div>
     
-    <!-- Desktop Sidebar Navigation -->
-    <nav class="fixed left-0 top-0 flex flex-col p-gutter space-y-4 h-screen w-64 border-r border-outline-variant bg-surface-container-low/80 backdrop-blur-md z-40 hidden md:flex">
-        <div class="flex flex-col space-y-2 mb-8">
-            <div class="flex items-center space-x-3">
-                <div class="w-12 h-12 rounded-full bg-secondary-container overflow-hidden border border-outline-variant">
-                    <img alt="Avatar" class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop"/>
-                </div>
-                <div>
-                    <h2 class="font-title-md text-title-md font-bold text-primary">[YOUR_NAME]</h2>
-                    <p class="font-label-sm text-label-sm text-on-surface-variant">[YOUR_TITLE]</p>
-                </div>
-            </div>
+    <div id="editor-toolbar" class="fixed top-0 left-0 right-0 h-12 bg-primary text-on-secondary flex items-center justify-between px-4 z-[200] shadow-lg">
+        <div class="flex items-center gap-4">
+            <span class="font-bold">Personal Bio Editor</span>
+            <span class="text-xs opacity-70">編輯模式</span>
         </div>
-        
-        <div class="space-y-1">
-            <a class="flex items-center space-x-3 px-4 py-3 bg-secondary-container text-on-secondary-container rounded-lg font-bold active-interaction" href="#profile">
-                <span class="material-symbols-outlined">person</span>
-                <span class="font-label-md text-label-md">Profile</span>
-            </a>
-            <a class="flex items-center space-x-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors active-interaction" href="#stats">
-                <span class="material-symbols-outlined">leaderboard</span>
-                <span class="font-label-md text-label-md">Stats</span>
-            </a>
-            <a class="flex items-center space-x-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors active-interaction" href="#music">
-                <span class="material-symbols-outlined">music_note</span>
-                <span class="font-label-md text-label-md">Music</span>
-            </a>
-            <a class="flex items-center space-x-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors active-interaction" href="#works">
-                <span class="material-symbols-outlined">menu_book</span>
-                <span class="font-label-md text-label-md">Works</span>
-            </a>
-            <a class="flex items-center space-x-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors active-interaction" href="#social">
-                <span class="material-symbols-outlined">share</span>
-                <span class="font-label-md text-label-md">Social</span>
-            </a>
+        <div class="flex items-center gap-2">
+            <button onclick="togglePreview()" class="px-3 py-1 bg-secondary-container text-on-secondary-container rounded text-sm hover:opacity-90">
+                <span class="material-symbols-outlined text-sm align-middle">visibility</span>
+                <span id="preview-toggle-text">預覽</span>
+            </button>
+            <button onclick="openSettingsModal()" class="px-3 py-1 bg-secondary-container text-on-secondary-container rounded text-sm hover:opacity-90">
+                <span class="material-symbols-outlined text-sm align-middle">settings</span>
+                設定
+            </button>
+            <button onclick="exportPackage()" class="px-3 py-1 bg-secondary text-on-secondary rounded text-sm hover:opacity-90">
+                <span class="material-symbols-outlined text-sm align-middle">download</span>
+                匯出
+            </button>
         </div>
-        
-        <div class="mt-auto space-y-1">
-            <a class="flex items-center space-x-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
-                <span class="material-symbols-outlined">settings</span>
-                <span class="font-label-md text-label-md">Settings</span>
-            </a>
-        </div>
-    </nav>
+    </div>
     
-    <!-- Main Content -->
-    <main class="md:ml-64 min-h-screen pb-24 md:pb-0">
-        <!-- Top Header (Desktop) -->
-        <header class="hidden md:flex w-full bg-background/60 backdrop-blur-sm px-margin-desktop py-4 max-w-container-max mx-auto justify-between items-center z-30">
-            <h1 class="font-headline-lg text-headline-lg font-bold text-primary tracking-tight">PERSONAL BIO</h1>
-            <div class="flex items-center space-x-4">
-                <span class="material-symbols-outlined text-on-surface-variant cursor-pointer">notifications</span>
-                <button id="settings-btn" class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">settings</button>
-            </div>
-        </header>
-        
-        <!-- Mobile Header -->
-        <header class="flex md:hidden bg-surface/80 backdrop-blur-sm border-b border-outline-variant sticky top-0 z-30 justify-between items-center w-full px-margin-mobile h-16">
-            <h1 class="font-title-md text-title-md text-on-surface tracking-tight">PERSONAL BIO</h1>
-            <button id="settings-btn-mobile" class="material-symbols-outlined text-on-surface-variant p-2 hover:text-primary transition-colors">settings</button>
-        </header>
-        
-        <div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8 md:py-unit-gutter mt-0 md:mt-8 space-y-8 md:space-y-12">
+    <div id="sidebar-editor" class="fixed left-0 top-12 w-64 h-[calc(100vh-48px)] bg-surface-container-low border-r border-outline-variant overflow-y-auto z-[150]">
+        <div class="p-4">
+            <h3 class="font-bold text-sm text-on-surface-variant mb-3 uppercase tracking-wider">導航項目</h3>
+            <div id="nav-items-container" class="space-y-2"></div>
+            <button onclick="addNavItem()" class="w-full mt-3 px-3 py-2 border-2 border-dashed border-outline-variant rounded-lg text-on-surface-variant text-sm hover:border-primary hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-sm align-middle">add</span>
+                新增導航項
+            </button>
             
-            <!-- Hero Section / Profile -->
-            <section id="profile" class="parchment-card rounded-xl p-6 md:p-8 flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8">
-                <div class="relative group">
-                    <div class="w-32 h-32 md:w-48 md:h-48 rounded-2xl overflow-hidden border-4 border-white shadow-xl rotate-3 transition-transform hover:rotate-0">
-                        <img alt="Profile picture" class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop"/>
-                    </div>
-                    <div class="absolute -bottom-2 -right-2 bg-primary text-on-primary p-2 rounded-full shadow-lg">
-                        <span class="material-symbols-outlined text-sm">verified</span>
-                    </div>
-                </div>
-                <div class="flex-1 text-center md:text-left pt-4">
-                    <span class="font-label-sm text-label-sm text-outline uppercase tracking-widest mb-2 block">Personal Profile</span>
-                    <h2 class="font-display-lg text-display-lg text-primary mb-4 leading-none">[YOUR_NAME]</h2>
-                    <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">[YOUR_BIO - Write a brief introduction about yourself, your interests, and what you do.]</p>
-                    <div class="mt-6 flex flex-wrap gap-3 justify-center md:justify-start">
-                        <span class="bg-surface-container px-4 py-1 rounded-full font-label-sm text-label-sm text-primary">SKILL 1</span>
-                        <span class="bg-surface-container px-4 py-1 rounded-full font-label-sm text-label-sm text-primary">SKILL 2</span>
-                        <span class="bg-surface-container px-4 py-1 rounded-full font-label-sm text-label-sm text-primary">SKILL 3</span>
-                    </div>
-                </div>
-            </section>
-            
-            <!-- Stats Grid -->
-            <section id="stats" class="grid grid-cols-3 gap-4 md:gap-8">
-                <div class="parchment-card rounded-xl p-4 md:p-6 flex flex-col items-center text-center">
-                    <span class="material-symbols-outlined text-outline mb-2 text-2xl">auto_stories</span>
-                    <span class="font-headline-lg text-headline-lg md:font-display-lg md:text-display-lg text-primary">[NUM]</span>
-                    <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Projects</span>
-                </div>
-                <div class="parchment-card rounded-xl p-4 md:p-6 flex flex-col items-center text-center">
-                    <span class="material-symbols-outlined text-outline mb-2 text-2xl">schedule</span>
-                    <span class="font-headline-lg text-headline-lg md:font-display-lg md:text-display-lg text-primary">[NUM]</span>
-                    <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Years Exp</span>
-                </div>
-                <div class="parchment-card rounded-xl p-4 md:p-6 flex flex-col items-center text-center">
-                    <span class="material-symbols-outlined text-outline mb-2 text-2xl">groups</span>
-                    <span class="font-headline-lg text-headline-lg md:font-display-lg md:text-display-lg text-primary">[NUM]</span>
-                    <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Connections</span>
-                </div>
-            </section>
-            
-            <!-- Music Player -->
-            <section id="music" class="parchment-card rounded-xl overflow-hidden">
-                <div class="h-32 bg-primary-container relative">
-                    <div class="absolute inset-0 opacity-20 flex items-center justify-center">
-                        <span class="material-symbols-outlined text-8xl">album</span>
-                    </div>
-                    <img alt="Album cover" class="w-full h-full object-cover opacity-60" src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400&h=200&fit=crop"/>
-                </div>
-                <div class="p-6">
-                    <div class="mb-4">
-                        <h4 class="font-title-md text-title-md text-primary truncate">[SONG_TITLE]</h4>
-                        <p class="font-label-sm text-label-sm text-on-surface-variant">[ARTIST_NAME] • [ALBUM_NAME]</p>
-                    </div>
-                    <div class="flex flex-col space-y-4">
-                        <div class="w-full bg-outline-variant h-1 rounded-full relative">
-                            <div class="absolute left-0 top-0 h-full w-1/3 bg-primary rounded-full"></div>
-                            <div class="absolute left-1/3 top-1/2 -translate-y-1/2 w-3 h-3 bg-primary rounded-full border-2 border-white shadow"></div>
-                        </div>
-                        <div class="flex justify-between text-[10px] font-mono text-outline">
-                            <span>01:42</span>
-                            <span>04:55</span>
-                        </div>
-                        <div class="flex items-center justify-center space-x-6">
-                            <button class="material-symbols-outlined text-primary hover:scale-110 transition-transform">skip_previous</button>
-                            <button id="play-btn" class="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center hover:scale-105 transition-transform active-interaction">
-                                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
-                            </button>
-                            <button class="material-symbols-outlined text-primary hover:scale-110 transition-transform">skip_next</button>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            
-            <!-- Works / Projects -->
-            <section id="works" class="space-y-6">
-                <div class="flex items-center justify-between">
-                    <h3 class="font-headline-lg text-headline-lg text-primary">Featured Works</h3>
-                    <button class="font-label-md text-label-md text-primary hover:underline">View All</button>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Project 1 -->
-                    <div class="parchment-card rounded-xl overflow-hidden hover:border-primary transition-colors cursor-pointer group">
-                        <div class="h-40 bg-surface-container-high relative overflow-hidden">
-                            <img alt="Project 1" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=300&fit=crop"/>
-                        </div>
-                        <div class="p-4">
-                            <div class="flex justify-between items-start mb-2">
-                                <h4 class="font-label-md text-label-md font-bold text-primary">[PROJECT_NAME]</h4>
-                                <span class="font-label-sm text-label-sm text-outline">[DATE]</span>
-                            </div>
-                            <p class="font-label-sm text-label-sm text-on-surface-variant line-clamp-2">[PROJECT_DESCRIPTION - Brief description of the project]</p>
-                        </div>
-                    </div>
-                    <!-- Project 2 -->
-                    <div class="parchment-card rounded-xl overflow-hidden hover:border-primary transition-colors cursor-pointer group">
-                        <div class="h-40 bg-surface-container-high relative overflow-hidden">
-                            <img alt="Project 2" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" src="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=300&fit=crop"/>
-                        </div>
-                        <div class="p-4">
-                            <div class="flex justify-between items-start mb-2">
-                                <h4 class="font-label-md text-label-md font-bold text-primary">[PROJECT_NAME]</h4>
-                                <span class="font-label-sm text-label-sm text-outline">[DATE]</span>
-                            </div>
-                            <p class="font-label-sm text-label-sm text-on-surface-variant line-clamp-2">[PROJECT_DESCRIPTION - Brief description of the project]</p>
-                        </div>
-                    </div>
-                    <!-- Project 3 -->
-                    <div class="parchment-card rounded-xl overflow-hidden hover:border-primary transition-colors cursor-pointer group">
-                        <div class="h-40 bg-surface-container-high relative overflow-hidden">
-                            <img alt="Project 3" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&h=300&fit=crop"/>
-                        </div>
-                        <div class="p-4">
-                            <div class="flex justify-between items-start mb-2">
-                                <h4 class="font-label-md text-label-md font-bold text-primary">[PROJECT_NAME]</h4>
-                                <span class="font-label-sm text-label-sm text-outline">[DATE]</span>
-                            </div>
-                            <p class="font-label-sm text-label-sm text-on-surface-variant line-clamp-2">[PROJECT_DESCRIPTION - Brief description of the project]</p>
-                        </div>
-                    </div>
-                    <!-- Project 4 -->
-                    <div class="parchment-card rounded-xl overflow-hidden hover:border-primary transition-colors cursor-pointer group">
-                        <div class="h-40 bg-surface-container-high relative overflow-hidden">
-                            <img alt="Project 4" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" src="https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=400&h=300&fit=crop"/>
-                        </div>
-                        <div class="p-4">
-                            <div class="flex justify-between items-start mb-2">
-                                <h4 class="font-label-md text-label-md font-bold text-primary">[PROJECT_NAME]</h4>
-                                <span class="font-label-sm text-label-sm text-outline">[DATE]</span>
-                            </div>
-                            <p class="font-label-sm text-label-sm text-on-surface-variant line-clamp-2">[PROJECT_DESCRIPTION - Brief description of the project]</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            
-            <!-- Social Connections -->
-            <section id="social" class="parchment-card rounded-xl p-6 md:p-8">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-title-md text-title-md text-primary">Social Connections</h3>
-                    <button class="font-label-sm text-label-sm text-primary hover:underline">View All</button>
-                </div>
-                <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
-                    <!-- Social 1 -->
-                    <a href="#" class="flex flex-col items-center space-y-2 group cursor-pointer">
-                        <div class="w-16 h-16 rounded-full border-2 border-transparent group-hover:border-primary transition-all p-1 bg-surface-container">
-                            <span class="material-symbols-outlined w-full h-full flex items-center justify-center text-3xl text-primary">code</span>
-                        </div>
-                        <span class="font-label-sm text-label-sm text-on-surface-variant truncate w-full text-center">GitHub</span>
-                    </a>
-                    <!-- Social 2 -->
-                    <a href="#" class="flex flex-col items-center space-y-2 group cursor-pointer">
-                        <div class="w-16 h-16 rounded-full border-2 border-transparent group-hover:border-primary transition-all p-1 bg-surface-container">
-                            <span class="material-symbols-outlined w-full h-full flex items-center justify-center text-3xl text-primary">work</span>
-                        </div>
-                        <span class="font-label-sm text-label-sm text-on-surface-variant truncate w-full text-center">LinkedIn</span>
-                    </a>
-                    <!-- Social 3 -->
-                    <a href="#" class="flex flex-col items-center space-y-2 group cursor-pointer">
-                        <div class="w-16 h-16 rounded-full border-2 border-transparent group-hover:border-primary transition-all p-1 bg-surface-container">
-                            <span class="material-symbols-outlined w-full h-full flex items-center justify-center text-3xl text-primary">mail</span>
-                        </div>
-                        <span class="font-label-sm text-label-sm text-on-surface-variant truncate w-full text-center">Email</span>
-                    </a>
-                    <!-- Social 4 -->
-                    <a href="#" class="flex flex-col items-center space-y-2 group cursor-pointer">
-                        <div class="w-16 h-16 rounded-full border-2 border-transparent group-hover:border-primary transition-all p-1 bg-surface-container">
-                            <span class="material-symbols-outlined w-full h-full flex items-center justify-center text-3xl text-primary">brush</span>
-                        </div>
-                        <span class="font-label-sm text-label-sm text-on-surface-variant truncate w-full text-center">Portfolio</span>
-                    </a>
-                    <!-- Social 5 -->
-                    <a href="#" class="flex flex-col items-center space-y-2 group cursor-pointer">
-                        <div class="w-16 h-16 rounded-full border-2 border-transparent group-hover:border-primary transition-all p-1 bg-surface-container">
-                            <span class="material-symbols-outlined w-full h-full flex items-center justify-center text-3xl text-primary">chat</span>
-                        </div>
-                        <span class="font-label-sm text-label-sm text-on-surface-variant truncate w-full text-center">Twitter</span>
-                    </a>
-                    <!-- Add More -->
-                    <div class="flex flex-col items-center space-y-2">
-                        <div class="w-16 h-16 rounded-full border-2 border-dashed border-outline-variant flex items-center justify-center text-outline hover:text-primary hover:border-primary cursor-pointer transition-all">
-                            <span class="material-symbols-outlined">add</span>
-                        </div>
-                        <span class="font-label-sm text-label-sm text-outline">Add</span>
-                    </div>
-                </div>
-            </section>
-            
-            <!-- Footer -->
-            <footer class="text-center text-outline-variant select-none pointer-events-none py-8">
-                <div class="flex items-center justify-center space-x-4 mb-4">
-                    <div class="h-px w-24 bg-current"></div>
-                    <span class="material-symbols-outlined">history_edu</span>
-                    <div class="h-px w-24 bg-current"></div>
-                </div>
-                <p class="font-label-sm text-label-sm">Personal Bio Template • Made with care</p>
-            </footer>
+            <h3 class="font-bold text-sm text-on-surface-variant mb-3 mt-6 uppercase tracking-wider">頁面區塊</h3>
+            <div id="blocks-list" class="space-y-2"></div>
+            <button onclick="openBlockLibrary()" class="w-full mt-3 px-3 py-2 bg-secondary-container text-on-secondary-container rounded-lg text-sm hover:opacity-90 transition-opacity">
+                <span class="material-symbols-outlined text-sm align-middle">add_box</span>
+                新增區塊
+            </button>
         </div>
+    </div>
+    
+    <main id="page-content" class="ml-64 mt-12 min-h-screen pb-24">
+        <div id="content-area" class="max-w-container-max mx-auto px-margin-desktop py-8 space-y-6"></div>
     </main>
     
-    <!-- Mobile Bottom Navigation -->
-    <nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-margin-mobile py-2 bg-surface/90 backdrop-blur-md border-t border-outline-variant shadow-lg h-20 flex md:hidden">
-        <a href="#profile" class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:text-primary transition-colors active-interaction">
-            <span class="material-symbols-outlined">person</span>
-            <span class="font-label-sm text-label-sm mt-1">Profile</span>
-        </a>
-        <a href="#stats" class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:text-primary transition-colors active-interaction">
-            <span class="material-symbols-outlined">leaderboard</span>
-            <span class="font-label-sm text-label-sm mt-1">Stats</span>
-        </a>
-        <a href="#works" class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:text-primary transition-colors active-interaction">
-            <span class="material-symbols-outlined">menu_book</span>
-            <span class="font-label-sm text-label-sm mt-1">Works</span>
-        </a>
-        <a href="#social" class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-lg px-4 py-1 active-interaction">
-            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">share</span>
-            <span class="font-label-sm text-label-sm mt-1 font-bold">Social</span>
-        </a>
-    </nav>
+    <div id="block-library-modal" class="fixed inset-0 z-[300] hidden">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeBlockLibrary()"></div>
+        <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-surface-container-low rounded-xl shadow-2xl max-h-[80vh] overflow-hidden">
+            <div class="sticky top-0 bg-surface-container-low border-b border-outline-variant p-4 flex items-center justify-between">
+                <h2 class="font-bold text-lg">選擇區塊類型</h2>
+                <button onclick="closeBlockLibrary()" class="material-symbols-outlined text-on-surface-variant hover:text-primary">close</button>
+            </div>
+            <div class="p-4 grid grid-cols-2 gap-4 overflow-y-auto max-h-[60vh]" id="block-types-grid"></div>
+        </div>
+    </div>
     
-    <!-- Settings Modal -->
-    <div id="settings-modal" class="fixed inset-0 z-[100] hidden">
-        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeSettingsModal()"></div>
+    <div id="block-settings-modal" class="fixed inset-0 z-[300] hidden">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeBlockSettings()"></div>
         <div class="absolute right-0 top-0 h-full w-full max-w-md bg-surface-container-low shadow-2xl overflow-y-auto">
             <div class="sticky top-0 bg-surface-container-low border-b border-outline-variant p-4 flex items-center justify-between">
-                <h2 class="font-title-md text-title-md text-primary">編輯設定</h2>
-                <button onclick="closeSettingsModal()" class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">close</button>
+                <h2 class="font-bold text-lg">區塊設定</h2>
+                <button onclick="closeBlockSettings()" class="material-symbols-outlined text-on-surface-variant hover:text-primary">close</button>
             </div>
-            
-            <div class="p-4 space-y-6">
-                <!-- Basic Info -->
-                <div class="space-y-4">
-                    <h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant pb-2">基本資訊</h3>
-                    <div class="space-y-3">
-                        <div>
-                            <label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">姓名</label>
-                            <input type="text" id="edit-name" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface focus:border-primary focus:outline-none" placeholder="輸入姓名">
-                        </div>
-                        <div>
-                            <label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">職稱</label>
-                            <input type="text" id="edit-title" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface focus:border-primary focus:outline-none" placeholder="輸入職稱">
-                        </div>
-                        <div>
-                            <label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">個人簡介</label>
-                            <textarea id="edit-bio" rows="3" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface focus:border-primary focus:outline-none resize-none" placeholder="輸入個人簡介"></textarea>
-                        </div>
-                        <div>
-                            <label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">技能標籤（用逗號分隔）</label>
-                            <input type="text" id="edit-skills" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface focus:border-primary focus:outline-none" placeholder="技能1, 技能2, 技能3">
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Stats -->
-                <div class="space-y-4">
-                    <h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant pb-2">統計數據</h3>
-                    <div class="grid grid-cols-3 gap-3">
-                        <div>
-                            <label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">專案數</label>
-                            <input type="text" id="edit-projects" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface focus:border-primary focus:outline-none" placeholder="0">
-                        </div>
-                        <div>
-                            <label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">年資</label>
-                            <input type="text" id="edit-years" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface focus:border-primary focus:outline-none" placeholder="0">
-                        </div>
-                        <div>
-                            <label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">連結數</label>
-                            <input type="text" id="edit-connections" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface focus:border-primary focus:outline-none" placeholder="0">
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Font Settings -->
-                <div class="space-y-4">
-                    <h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant pb-2">字體設定</h3>
-                    <div class="space-y-3">
-                        <div>
-                            <label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">標題字體</label>
-                            <select id="edit-heading-font" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface focus:border-primary focus:outline-none">
-                                <option value="Noto Serif">Noto Serif</option>
-                                <option value="Inter">Inter</option>
-                                <option value="Arial">Arial</option>
-                                <option value="Georgia">Georgia</option>
-                                <option value="Times New Roman">Times New Roman</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">正文字體</label>
-                            <select id="edit-body-font" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface focus:border-primary focus:outline-none">
-                                <option value="Noto Serif">Noto Serif</option>
-                                <option value="Inter">Inter</option>
-                                <option value="Arial">Arial</option>
-                                <option value="Georgia">Georgia</option>
-                                <option value="Times New Roman">Times New Roman</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Color Settings -->
-                <div class="space-y-4">
-                    <h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant pb-2">顏色設定</h3>
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between">
-                            <label class="font-label-sm text-label-sm text-on-surface-variant">主要顏色</label>
-                            <input type="color" id="edit-primary-color" value="#171818" class="w-10 h-10 rounded-lg border border-outline-variant cursor-pointer">
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <label class="font-label-sm text-label-sm text-on-surface-variant">背景顏色</label>
-                            <input type="color" id="edit-bg-color" value="#fbf9f4" class="w-10 h-10 rounded-lg border border-outline-variant cursor-pointer">
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <label class="font-label-sm text-label-sm text-on-surface-variant">卡片背景</label>
-                            <input type="color" id="edit-card-color" value="#ffffff" class="w-10 h-10 rounded-lg border border-outline-variant cursor-pointer">
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Image Upload -->
-                <div class="space-y-4">
-                    <h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant pb-2">圖片上傳</h3>
-                    <div class="space-y-3">
-                        <div>
-                            <label class="font-label-sm text-label-sm text-on-surface-variant block mb-2">大頭貼</label>
-                            <div class="flex items-center gap-3">
-                                <div id="avatar-preview" class="w-16 h-16 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden flex items-center justify-center">
-                                    <span class="material-symbols-outlined text-outline">person</span>
-                                </div>
-                                <label class="px-4 py-2 bg-primary text-on-primary rounded-lg cursor-pointer hover:opacity-90 transition-opacity font-label-sm">
-                                    選擇圖片
-                                    <input type="file" id="edit-avatar" accept="image/*" class="hidden" onchange="previewImage(this, 'avatar-preview')">
-                                </label>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="font-label-sm text-label-sm text-on-surface-variant block mb-2">背景圖片</label>
-                            <div class="flex items-center gap-3">
-                                <div id="bg-preview" class="w-16 h-16 rounded-lg bg-surface-container-high border border-outline-variant overflow-hidden flex items-center justify-center">
-                                    <span class="material-symbols-outlined text-outline">image</span>
-                                </div>
-                                <label class="px-4 py-2 bg-primary text-on-primary rounded-lg cursor-pointer hover:opacity-90 transition-opacity font-label-sm">
-                                    選擇圖片
-                                    <input type="file" id="edit-bg-image" accept="image/*" class="hidden" onchange="previewImage(this, 'bg-preview')">
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Social Links -->
-                <div class="space-y-4">
-                    <h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant pb-2">社群連結</h3>
-                    <div class="space-y-3">
-                        <div>
-                            <label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">GitHub</label>
-                            <input type="url" id="edit-github" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface focus:border-primary focus:outline-none" placeholder="https://github.com/username">
-                        </div>
-                        <div>
-                            <label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">LinkedIn</label>
-                            <input type="url" id="edit-linkedin" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface focus:border-primary focus:outline-none" placeholder="https://linkedin.com/in/username">
-                        </div>
-                        <div>
-                            <label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">Email</label>
-                            <input type="email" id="edit-email" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface focus:border-primary focus:outline-none" placeholder="your@email.com">
-                        </div>
-                        <div>
-                            <label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">Portfolio</label>
-                            <input type="url" id="edit-portfolio" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface focus:border-primary focus:outline-none" placeholder="https://yourportfolio.com">
-                        </div>
-                        <div>
-                            <label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">Twitter</label>
-                            <input type="url" id="edit-twitter" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface focus:border-primary focus:outline-none" placeholder="https://twitter.com/username">
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="sticky bottom-0 bg-surface-container-low border-t border-outline-variant p-4 space-y-3">
-                <button onclick="exportPackage()" class="w-full px-4 py-3 bg-secondary text-on-secondary rounded-lg hover:opacity-90 transition-opacity font-label-md flex items-center justify-center gap-2">
-                    <span class="material-symbols-outlined">download</span>
-                    匯出打包下載
-                </button>
-                <div class="flex gap-3">
-                    <button onclick="resetSettings()" class="flex-1 px-4 py-3 border border-outline-variant text-on-surface-variant rounded-lg hover:bg-surface-container-high transition-colors font-label-md">
-                        重置
-                    </button>
-                    <button onclick="applySettings()" class="flex-1 px-4 py-3 bg-primary text-on-primary rounded-lg hover:opacity-90 transition-opacity font-label-md">
-                        套用變更
-                    </button>
-                </div>
+            <div id="block-settings-content" class="p-4"></div>
+            <div class="sticky bottom-0 bg-surface-container-low border-t border-outline-variant p-4">
+                <button onclick="saveBlockSettings()" class="w-full px-4 py-3 bg-primary text-on-primary rounded-lg">儲存設定</button>
             </div>
         </div>
     </div>
     
+    <div id="settings-modal" class="fixed inset-0 z-[300] hidden">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeSettingsModal()"></div>
+        <div class="absolute right-0 top-0 h-full w-full max-w-md bg-surface-container-low shadow-2xl overflow-y-auto">
+            <div class="sticky top-0 bg-surface-container-low border-b border-outline-variant p-4 flex items-center justify-between">
+                <h2 class="font-bold text-lg">全域設定</h2>
+                <button onclick="closeSettingsModal()" class="material-symbols-outlined text-on-surface-variant hover:text-primary">close</button>
+            </div>
+            <div class="p-4 space-y-6">
+                <div class="space-y-3">
+                    <h3 class="font-bold text-sm text-on-surface-variant uppercase tracking-wider border-b border-outline-variant pb-2">基本資訊</h3>
+                    <div>
+                        <label class="text-sm text-on-surface-variant block mb-1">姓名</label>
+                        <input type="text" id="global-name" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="text-sm text-on-surface-variant block mb-1">職稱</label>
+                        <input type="text" id="global-title" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="text-sm text-on-surface-variant block mb-1">個人簡介</label>
+                        <textarea id="global-bio" rows="3" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none resize-none"></textarea>
+                    </div>
+                    <div>
+                        <label class="text-sm text-on-surface-variant block mb-1">技能（逗號分隔）</label>
+                        <input type="text" id="global-skills" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+                    </div>
+                </div>
+                
+                <div class="space-y-3">
+                    <h3 class="font-bold text-sm text-on-surface-variant uppercase tracking-wider border-b border-outline-variant pb-2">統計數據</h3>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <label class="text-sm text-on-surface-variant block mb-1">專案數</label>
+                            <input type="text" id="global-projects" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="text-sm text-on-surface-variant block mb-1">年資</label>
+                            <input type="text" id="global-years" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="text-sm text-on-surface-variant block mb-1">連結數</label>
+                            <input type="text" id="global-connections" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-3">
+                    <h3 class="font-bold text-sm text-on-surface-variant uppercase tracking-wider border-b border-outline-variant pb-2">外觀設定</h3>
+                    <div>
+                        <label class="text-sm text-on-surface-variant block mb-1">標題字體</label>
+                        <select id="global-heading-font" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+                            <option value="Noto Serif">Noto Serif</option>
+                            <option value="Inter">Inter</option>
+                            <option value="Arial">Arial</option>
+                            <option value="Georgia">Georgia</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-sm text-on-surface-variant block mb-1">正文字體</label>
+                        <select id="global-body-font" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+                            <option value="Noto Serif">Noto Serif</option>
+                            <option value="Inter">Inter</option>
+                            <option value="Arial">Arial</option>
+                            <option value="Georgia">Georgia</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <label class="text-sm text-on-surface-variant">主要顏色</label>
+                        <input type="color" id="global-primary-color" value="#171818" class="w-10 h-10 rounded border border-outline-variant cursor-pointer">
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <label class="text-sm text-on-surface-variant">背景顏色</label>
+                        <input type="color" id="global-bg-color" value="#fbf9f4" class="w-10 h-10 rounded border border-outline-variant cursor-pointer">
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <label class="text-sm text-on-surface-variant">卡片背景</label>
+                        <input type="color" id="global-card-color" value="#ffffff" class="w-10 h-10 rounded border border-outline-variant cursor-pointer">
+                    </div>
+                </div>
+                
+                <div class="space-y-3">
+                    <h3 class="font-bold text-sm text-on-surface-variant uppercase tracking-wider border-b border-outline-variant pb-2">圖片</h3>
+                    <div>
+                        <label class="text-sm text-on-surface-variant block mb-2">大頭貼</label>
+                        <div class="flex items-center gap-3">
+                            <div id="global-avatar-preview" class="w-16 h-16 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden flex items-center justify-center">
+                                <span class="material-symbols-outlined text-outline">person</span>
+                            </div>
+                            <label class="px-3 py-2 bg-primary text-on-primary rounded cursor-pointer hover:opacity-90 text-sm">
+                                選擇圖片
+                                <input type="file" id="global-avatar" accept="image/*" class="hidden" onchange="previewGlobalImage(this, 'avatar')">
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-sm text-on-surface-variant block mb-2">背景圖片</label>
+                        <div class="flex items-center gap-3">
+                            <div id="global-bg-preview" class="w-16 h-16 rounded bg-surface-container-high border border-outline-variant overflow-hidden flex items-center justify-center">
+                                <span class="material-symbols-outlined text-outline">image</span>
+                            </div>
+                            <label class="px-3 py-2 bg-primary text-on-primary rounded cursor-pointer hover:opacity-90 text-sm">
+                                選擇圖片
+                                <input type="file" id="global-bg-image" accept="image/*" class="hidden" onchange="previewGlobalImage(this, 'bg')">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-3">
+                    <h3 class="font-bold text-sm text-on-surface-variant uppercase tracking-wider border-b border-outline-variant pb-2">社群連結</h3>
+                    <div>
+                        <label class="text-sm text-on-surface-variant block mb-1">GitHub</label>
+                        <input type="url" id="global-github" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none" placeholder="https://github.com/username">
+                    </div>
+                    <div>
+                        <label class="text-sm text-on-surface-variant block mb-1">LinkedIn</label>
+                        <input type="url" id="global-linkedin" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none" placeholder="https://linkedin.com/in/username">
+                    </div>
+                    <div>
+                        <label class="text-sm text-on-surface-variant block mb-1">Email</label>
+                        <input type="email" id="global-email" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="text-sm text-on-surface-variant block mb-1">Portfolio</label>
+                        <input type="url" id="global-portfolio" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="text-sm text-on-surface-variant block mb-1">Twitter</label>
+                        <input type="url" id="global-twitter" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+                    </div>
+                </div>
+            </div>
+            <div class="sticky bottom-0 bg-surface-container-low border-t border-outline-variant p-4">
+                <button onclick="saveGlobalSettings()" class="w-full px-4 py-3 bg-primary text-on-primary rounded-lg">儲存設定</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
