@@ -61,28 +61,41 @@ function init() {
 }
 
 function loadFromStorage() {
-    const savedGlobal = localStorage.getItem('personalBio_global');
-    if (savedGlobal) {
-        globalSettings = { ...globalSettings, ...JSON.parse(savedGlobal) };
+    try {
+        const savedGlobal = localStorage.getItem('personalBio_global');
+        if (savedGlobal) {
+            const parsed = JSON.parse(savedGlobal);
+            globalSettings = { ...globalSettings, ...parsed };
+        }
+        const savedConfig = localStorage.getItem('personalBio_pageConfig');
+        if (savedConfig) {
+            const parsed = JSON.parse(savedConfig);
+            pageConfig = { ...pageConfig, ...parsed };
+        }
+        const savedAvatar = localStorage.getItem('personalBio_avatar');
+        if (savedAvatar) globalSettings.avatarData = savedAvatar;
+        const savedBg = localStorage.getItem('personalBio_bg');
+        if (savedBg) globalSettings.bgImageData = savedBg;
+        console.log('資料載入成功:', { globalSettings, pageConfig });
+    } catch (e) {
+        console.error('載入資料失敗:', e);
     }
-    const savedConfig = localStorage.getItem('personalBio_pageConfig');
-    if (savedConfig) {
-        pageConfig = { ...pageConfig, ...JSON.parse(savedConfig) };
-    }
-    const savedAvatar = localStorage.getItem('personalBio_avatar');
-    if (savedAvatar) globalSettings.avatarData = savedAvatar;
-    const savedBg = localStorage.getItem('personalBio_bg');
-    if (savedBg) globalSettings.bgImageData = savedBg;
 }
 
 function saveToStorage() {
-    const settingsToSave = { ...globalSettings };
-    delete settingsToSave.avatarData;
-    delete settingsToSave.bgImageData;
-    localStorage.setItem('personalBio_global', JSON.stringify(settingsToSave));
-    localStorage.setItem('personalBio_pageConfig', JSON.stringify(pageConfig));
-    if (globalSettings.avatarData) localStorage.setItem('personalBio_avatar', globalSettings.avatarData);
-    if (globalSettings.bgImageData) localStorage.setItem('personalBio_bg', globalSettings.bgImageData);
+    try {
+        const settingsToSave = { ...globalSettings };
+        delete settingsToSave.avatarData;
+        delete settingsToSave.bgImageData;
+        localStorage.setItem('personalBio_global', JSON.stringify(settingsToSave));
+        localStorage.setItem('personalBio_pageConfig', JSON.stringify(pageConfig));
+        if (globalSettings.avatarData) localStorage.setItem('personalBio_avatar', globalSettings.avatarData);
+        if (globalSettings.bgImageData) localStorage.setItem('personalBio_bg', globalSettings.bgImageData);
+        console.log('資料儲存成功');
+    } catch (e) {
+        console.error('儲存資料失敗:', e);
+        alert('儲存失敗，請檢查瀏覽器儲存空間');
+    }
 }
 
 function renderNavItems() {
