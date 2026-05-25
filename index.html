@@ -543,13 +543,19 @@
                 </div>
             </div>
             
-            <div class="sticky bottom-0 bg-surface-container-low border-t border-outline-variant p-4 flex gap-3">
-                <button onclick="resetSettings()" class="flex-1 px-4 py-3 border border-outline-variant text-on-surface-variant rounded-lg hover:bg-surface-container-high transition-colors font-label-md">
-                    重置
+            <div class="sticky bottom-0 bg-surface-container-low border-t border-outline-variant p-4 space-y-3">
+                <button onclick="exportPackage()" class="w-full px-4 py-3 bg-secondary text-on-secondary rounded-lg hover:opacity-90 transition-opacity font-label-md flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined">download</span>
+                    匯出打包下載
                 </button>
-                <button onclick="applySettings()" class="flex-1 px-4 py-3 bg-primary text-on-primary rounded-lg hover:opacity-90 transition-opacity font-label-md">
-                    套用變更
-                </button>
+                <div class="flex gap-3">
+                    <button onclick="resetSettings()" class="flex-1 px-4 py-3 border border-outline-variant text-on-surface-variant rounded-lg hover:bg-surface-container-high transition-colors font-label-md">
+                        重置
+                    </button>
+                    <button onclick="applySettings()" class="flex-1 px-4 py-3 bg-primary text-on-primary rounded-lg hover:opacity-90 transition-opacity font-label-md">
+                        套用變更
+                    </button>
+                </div>
             </div>
         </div>
     </div>
