@@ -950,8 +950,16 @@ window.togglePreview = togglePreview;
 window.exportPackage = exportPackage;
 window.initDragDrop = initDragDrop;
 
-window.addEventListener('DOMContentLoaded', init);
+let initialized = false;
+
+function safeInit() {
+    if (initialized) return;
+    initialized = true;
+    init();
+}
+
+window.addEventListener('DOMContentLoaded', safeInit);
 
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    init();
+    safeInit();
 }
