@@ -32,3 +32,26 @@ body {
     transform: scale(0.98);
     transition: transform 0.1s ease;
 }
+
+#settings-modal input[type="text"],
+#settings-modal input[type="url"],
+#settings-modal input[type="email"],
+#settings-modal textarea,
+#settings-modal select {
+    font-size: 14px;
+}
+
+#settings-modal input[type="color"] {
+    -webkit-appearance: none;
+    border: none;
+    padding: 0;
+}
+
+#settings-modal input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+#settings-modal input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 6px;
+}
