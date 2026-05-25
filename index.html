@@ -97,42 +97,7 @@
             },
         }
     </script>
-    <style>
-        body {
-            background-image: url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&q=80');
-            background-size: cover;
-            background-attachment: fixed;
-            background-repeat: no-repeat;
-        }
-        
-        .grain-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 50;
-            opacity: 0.03;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-        }
-        
-        .parchment-card {
-            background-color: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(8px);
-            border: 1px solid #E8E2D6;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-        }
-        
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        
-        .active-interaction:active {
-            transform: scale(0.98);
-            transition: transform 0.1s ease;
-        }
-    </style>
+    <link href="styles.css" rel="stylesheet"/>
 </head>
 <body class="font-body-md text-on-surface">
     <div class="grain-overlay"></div>
@@ -421,25 +386,6 @@
         </a>
     </nav>
     
-    <script>
-        const playBtn = document.getElementById('play-btn');
-        let isPlaying = false;
-        
-        playBtn.addEventListener('click', () => {
-            isPlaying = !isPlaying;
-            const icon = playBtn.querySelector('.material-symbols-outlined');
-            icon.textContent = isPlaying ? 'pause' : 'play_arrow';
-        });
-        
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth' });
-                }
-            });
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
