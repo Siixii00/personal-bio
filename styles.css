@@ -1,0 +1,101 @@
+body {
+    background-size: cover;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+}
+
+.grain-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 50;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+.parchment-card {
+    background-color: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(8px);
+    border: 1px solid #E8E2D6;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.nav-item-editor,
+.block-item-editor {
+    transition: all 0.2s ease;
+}
+
+.nav-item-editor:hover,
+.block-item-editor:hover {
+    background-color: #eae8e3;
+}
+
+[draggable="true"] {
+    user-select: none;
+}
+
+section {
+    transition: all 0.2s ease;
+}
+
+section:hover {
+    box-shadow: 0 0 0 2px rgba(23, 24, 24, 0.1);
+}
+
+.grid-blocks-container {
+    min-height: 200px;
+}
+
+.block-drop-zone {
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.block-drop-zone.drop-left {
+    box-shadow: -4px 0 0 0 rgba(23, 24, 24, 0.3);
+}
+
+.block-drop-zone.drop-right {
+    box-shadow: 4px 0 0 0 rgba(23, 24, 24, 0.3);
+}
+
+.block-drop-zone.drop-center {
+    box-shadow: inset 0 0 0 2px rgba(23, 24, 24, 0.3);
+}
+
+.resize-handle {
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.block-drop-zone:hover .resize-handle {
+    opacity: 1;
+}
+
+.resize-handle-left:hover {
+    background: linear-gradient(to right, rgba(23, 24, 24, 0.2), transparent);
+}
+
+.resize-handle-right:hover {
+    background: linear-gradient(to left, rgba(23, 24, 24, 0.2), transparent);
+}
+
+.block-type-item:active {
+    cursor: grabbing;
+}
+
+.drop-zone-empty {
+    transition: all 0.3s ease;
+}
+
+.drop-zone-empty.drag-over {
+    border-color: #171818;
+    background-color: rgba(23, 24, 24, 0.05);
+}

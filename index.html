@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html class="light" lang="zh-TW">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Personal Bio Editor</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif:wght@400;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-variant": "#e4e2dd",
+                        "surface-container-high": "#eae8e3",
+                        "background": "#fbf9f4",
+                        "on-secondary": "#ffffff",
+                        "surface-dim": "#dbdad5",
+                        "primary": "#171818",
+                        "surface-container-lowest": "#ffffff",
+                        "outline": "#747878",
+                        "on-surface": "#1b1c19",
+                        "surface-container-low": "#f5f3ee",
+                        "outline-variant": "#c4c7c7",
+                        "surface-container-highest": "#e4e2dd",
+                        "secondary-container": "#eadecf",
+                        "on-secondary-container": "#696155",
+                        "secondary": "#655d51",
+                        "on-surface-variant": "#444748",
+                        "surface-container": "#f0eee9",
+                        "surface": "#fbf9f4",
+                        "primary-container": "#2c2c2c"
+                    },
+                    "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                    "spacing": { "margin-desktop": "64px", "container-max": "1200px", "gutter": "24px", "unit": "8px", "margin-mobile": "20px" }
+                },
+            },
+        }
+    </script>
+    <link href="styles.css" rel="stylesheet"/>
+</head>
+<body class="font-body-md text-on-surface">
+    <div class="grain-overlay"></div>
+    
+    <div id="editor-toolbar" class="fixed top-0 left-0 right-0 h-12 bg-primary text-on-secondary flex items-center justify-between px-4 z-[200] shadow-lg">
+        <div class="flex items-center gap-4">
+            <span class="font-bold">Personal Bio Editor</span>
+            <span class="text-xs opacity-70">編輯模式</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="togglePreview()" class="px-3 py-1 bg-secondary-container text-on-secondary-container rounded text-sm hover:opacity-90">
+                <span class="material-symbols-outlined text-sm align-middle">visibility</span>
+                <span id="preview-toggle-text">預覽</span>
+            </button>
+            <button onclick="openSettingsModal()" class="px-3 py-1 bg-secondary-container text-on-secondary-container rounded text-sm hover:opacity-90">
+                <span class="material-symbols-outlined text-sm align-middle">settings</span>
+                設定
+            </button>
+            <button onclick="exportPackage()" class="px-3 py-1 bg-secondary text-on-secondary rounded text-sm hover:opacity-90">
+                <span class="material-symbols-outlined text-sm align-middle">download</span>
+                匯出
+            </button>
+        </div>
+    </div>
+    
+    <div id="sidebar-editor" class="fixed left-0 top-12 w-72 h-[calc(100vh-48px)] bg-surface-container-low border-r border-outline-variant overflow-y-auto z-[150]">
+        <div class="p-3">
+            <h3 class="font-bold text-sm text-on-surface-variant mb-3 uppercase tracking-wider">導航項目</h3>
+            <div id="nav-items-container" class="space-y-2"></div>
+            <button onclick="addNavItem()" class="w-full mt-3 px-3 py-2 border-2 border-dashed border-outline-variant rounded-lg text-on-surface-variant text-sm hover:border-primary hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-sm align-middle">add</span>
+                新增導航項
+            </button>
+            
+            <h3 class="font-bold text-sm text-on-surface-variant mb-3 mt-6 uppercase tracking-wider">頁面區塊</h3>
+            <div id="blocks-list" class="space-y-2"></div>
+            
+            <h3 class="font-bold text-sm text-on-surface-variant mb-3 mt-6 uppercase tracking-wider">新增區塊</h3>
+            <p class="text-xs text-on-surface-variant/70 mb-2">拖曳到右側新增</p>
+            <div id="block-library-sidebar" class="space-y-2"></div>
+        </div>
+    </div>
+    
+    <main id="page-content" class="ml-72 mt-12 min-h-screen pb-24">
+        <div id="content-area" class="max-w-container-max mx-auto px-margin-desktop py-8 space-y-6"></div>
+    </main>
+    
+    <div id="block-library-modal" class="fixed inset-0 z-[300] hidden">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeBlockLibrary()"></div>
+        <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-surface-container-low rounded-xl shadow-2xl max-h-[80vh] overflow-hidden">
+            <div class="sticky top-0 bg-surface-container-low border-b border-outline-variant p-4 flex items-center justify-between">
+                <h2 class="font-bold text-lg">選擇區塊類型</h2>
+                <button onclick="closeBlockLibrary()" class="material-symbols-outlined text-on-surface-variant hover:text-primary">close</button>
+            </div>
+            <div class="p-4 grid grid-cols-2 gap-4 overflow-y-auto max-h-[60vh]" id="block-types-grid"></div>
+        </div>
+    </div>
+    
+    <div id="block-settings-modal" class="fixed inset-0 z-[300] hidden">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeBlockSettings()"></div>
+        <div class="absolute right-0 top-0 h-full w-full max-w-md bg-surface-container-low shadow-2xl overflow-y-auto">
+            <div class="sticky top-0 bg-surface-container-low border-b border-outline-variant p-4 flex items-center justify-between">
+                <h2 class="font-bold text-lg">區塊設定</h2>
+                <button onclick="closeBlockSettings()" class="material-symbols-outlined text-on-surface-variant hover:text-primary">close</button>
+            </div>
+            <div id="block-settings-content" class="p-4"></div>
+            <div class="sticky bottom-0 bg-surface-container-low border-t border-outline-variant p-4">
+                <button onclick="saveBlockSettings()" class="w-full px-4 py-3 bg-primary text-on-primary rounded-lg">儲存設定</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="settings-modal" class="fixed inset-0 z-[300] hidden">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeSettingsModal()"></div>
+        <div class="absolute right-0 top-0 h-full w-full max-w-md bg-surface-container-low shadow-2xl overflow-y-auto">
+            <div class="sticky top-0 bg-surface-container-low border-b border-outline-variant p-4 flex items-center justify-between">
+                <h2 class="font-bold text-lg">全域設定</h2>
+                <button onclick="closeSettingsModal()" class="material-symbols-outlined text-on-surface-variant hover:text-primary">close</button>
+            </div>
+            <div class="p-4 space-y-6">
+                <div class="space-y-3">
+                    <h3 class="font-bold text-sm text-on-surface-variant uppercase tracking-wider border-b border-outline-variant pb-2">基本資訊</h3>
+                    <div>
+                        <label class="text-sm text-on-surface-variant block mb-1">姓名</label>
+                        <input type="text" id="global-name" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="text-sm text-on-surface-variant block mb-1">職稱</label>
+                        <input type="text" id="global-title" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="text-sm text-on-surface-variant block mb-1">個人簡介</label>
+                        <textarea id="global-bio" rows="3" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none resize-none"></textarea>
+                    </div>
+                    <div>
+                        <label class="text-sm text-on-surface-variant block mb-1">技能（逗號分隔）</label>
+                        <input type="text" id="global-skills" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+                    </div>
+                </div>
+                
+                <div class="space-y-3">
+                    <h3 class="font-bold text-sm text-on-surface-variant uppercase tracking-wider border-b border-outline-variant pb-2">統計數據</h3>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <label class="text-sm text-on-surface-variant block mb-1">專案數</label>
+                            <input type="text" id="global-projects" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="text-sm text-on-surface-variant block mb-1">年資</label>
+                            <input type="text" id="global-years" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="text-sm text-on-surface-variant block mb-1">連結數</label>
+                            <input type="text" id="global-connections" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-3">
+                    <h3 class="font-bold text-sm text-on-surface-variant uppercase tracking-wider border-b border-outline-variant pb-2">外觀設定</h3>
+                    <div>
+                        <label class="text-sm text-on-surface-variant block mb-1">標題字體</label>
+                        <select id="global-heading-font" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+                            <option value="Noto Serif">Noto Serif</option>
+                            <option value="Inter">Inter</option>
+                            <option value="Arial">Arial</option>
+                            <option value="Georgia">Georgia</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-sm text-on-surface-variant block mb-1">正文字體</label>
+                        <select id="global-body-font" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+                            <option value="Noto Serif">Noto Serif</option>
+                            <option value="Inter">Inter</option>
+                            <option value="Arial">Arial</option>
+                            <option value="Georgia">Georgia</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <label class="text-sm text-on-surface-variant">主要顏色</label>
+                        <input type="color" id="global-primary-color" value="#171818" class="w-10 h-10 rounded border border-outline-variant cursor-pointer">
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <label class="text-sm text-on-surface-variant">背景顏色</label>
+                        <input type="color" id="global-bg-color" value="#fbf9f4" class="w-10 h-10 rounded border border-outline-variant cursor-pointer">
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <label class="text-sm text-on-surface-variant">卡片背景</label>
+                        <input type="color" id="global-card-color" value="#ffffff" class="w-10 h-10 rounded border border-outline-variant cursor-pointer">
+                    </div>
+                </div>
+                
+                <div class="space-y-3">
+                    <h3 class="font-bold text-sm text-on-surface-variant uppercase tracking-wider border-b border-outline-variant pb-2">圖片</h3>
+                    <div>
+                        <label class="text-sm text-on-surface-variant block mb-2">大頭貼</label>
+                        <div class="flex items-center gap-3">
+                            <div id="global-avatar-preview" class="w-16 h-16 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden flex items-center justify-center">
+                                <span class="material-symbols-outlined text-outline">person</span>
+                            </div>
+                            <label class="px-3 py-2 bg-primary text-on-primary rounded cursor-pointer hover:opacity-90 text-sm">
+                                選擇圖片
+                                <input type="file" id="global-avatar" accept="image/*" class="hidden" onchange="previewGlobalImage(this, 'avatar')">
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-sm text-on-surface-variant block mb-2">背景圖片</label>
+                        <div class="flex items-center gap-3">
+                            <div id="global-bg-preview" class="w-16 h-16 rounded bg-surface-container-high border border-outline-variant overflow-hidden flex items-center justify-center">
+                                <span class="material-symbols-outlined text-outline">image</span>
+                            </div>
+                            <label class="px-3 py-2 bg-primary text-on-primary rounded cursor-pointer hover:opacity-90 text-sm">
+                                選擇圖片
+                                <input type="file" id="global-bg-image" accept="image/*" class="hidden" onchange="previewGlobalImage(this, 'bg')">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-3">
+                    <h3 class="font-bold text-sm text-on-surface-variant uppercase tracking-wider border-b border-outline-variant pb-2">社群連結</h3>
+                    <div>
+                        <label class="text-sm text-on-surface-variant block mb-1">GitHub</label>
+                        <input type="url" id="global-github" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none" placeholder="https://github.com/username">
+                    </div>
+                    <div>
+                        <label class="text-sm text-on-surface-variant block mb-1">LinkedIn</label>
+                        <input type="url" id="global-linkedin" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none" placeholder="https://linkedin.com/in/username">
+                    </div>
+                    <div>
+                        <label class="text-sm text-on-surface-variant block mb-1">Email</label>
+                        <input type="email" id="global-email" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="text-sm text-on-surface-variant block mb-1">Portfolio</label>
+                        <input type="url" id="global-portfolio" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="text-sm text-on-surface-variant block mb-1">Twitter</label>
+                        <input type="url" id="global-twitter" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+                    </div>
+                </div>
+            </div>
+            <div class="sticky bottom-0 bg-surface-container-low border-t border-outline-variant p-4">
+                <button onclick="saveGlobalSettings()" class="w-full px-4 py-3 bg-primary text-on-primary rounded-lg">儲存設定</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="script.js" defer></script>
+</body>
+</html>
