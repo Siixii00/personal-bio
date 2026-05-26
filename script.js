@@ -46,6 +46,8 @@ const blockTypes = [
     { type: 'social', name: '社群連結', icon: 'share', description: '社群媒體連結' },
     { type: 'text', name: '文字區塊', icon: 'article', description: '自訂文字內容' },
     { type: 'image', name: '圖片區塊', icon: 'image', description: '單張圖片展示' },
+    { type: 'avatarCircle', name: '圓形頭貼', icon: 'account_circle', description: '圓形大頭貼展示' },
+    { type: 'duoAvatar', name: '雙人頭貼', icon: 'people', description: 'O X O 排列的雙人頭貼' },
     { type: 'links', name: '連結列表', icon: 'link', description: '自訂連結按鈕列表' },
     { type: 'divider', name: '分隔線', icon: 'horizontal_rule', description: '視覺分隔區塊' },
     { type: 'html', name: '自訂 HTML', icon: 'code', description: '嵌入自訂 HTML 代碼' }
@@ -332,6 +334,25 @@ function renderBlockPreview(block) {
             <div class="flex items-center justify-center h-full bg-surface-container">
                 <span class="material-symbols-outlined text-2xl text-on-surface-variant">code</span>
             </div>
+        `,
+        avatarCircle: () => `
+            <div class="flex flex-col items-center justify-center h-full p-2">
+                <div class="w-10 h-10 rounded-full bg-surface-container overflow-hidden">
+                    <img src="${block.avatarUrl || avatarSrc}" class="w-full h-full object-cover"/>
+                </div>
+                <div class="h-1.5 bg-on-surface/20 rounded w-2/3 mt-1"></div>
+            </div>
+        `,
+        duoAvatar: () => `
+            <div class="flex items-center justify-center h-full p-2 gap-2">
+                <div class="w-8 h-8 rounded-full bg-surface-container overflow-hidden">
+                    <img src="${block.leftAvatar || avatarSrc}" class="w-full h-full object-cover"/>
+                </div>
+                <span class="material-symbols-outlined text-sm text-primary">${block.centerIcon || 'favorite'}</span>
+                <div class="w-8 h-8 rounded-full bg-surface-container overflow-hidden">
+                    <img src="${block.rightAvatar || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop'}" class="w-full h-full object-cover"/>
+                </div>
+            </div>
         `
     };
     
@@ -558,6 +579,8 @@ function renderBlockTypePreviewMini(type) {
         social: 'share',
         text: 'article',
         image: 'image',
+        avatarCircle: 'account_circle',
+        duoAvatar: 'people',
         links: 'link',
         divider: 'horizontal_rule',
         html: 'code'
@@ -852,7 +875,8 @@ function createBlockByType(type) {
         id,
         type,
         title: bt ? bt.name : 'New Block',
-        visible: true
+        visible: true,
+        width: type === 'avatarCircle' ? 4 : (type === 'duoAvatar' ? 6 : 12)
     };
     
     if (type === 'works') {
@@ -868,6 +892,20 @@ function createBlockByType(type) {
     }
     if (type === 'image') {
         newBlock.imageUrl = 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800';
+    }
+    if (type === 'avatarCircle') {
+        newBlock.avatarUrl = '';
+        newBlock.showName = true;
+        newBlock.showTitle = true;
+    }
+    if (type === 'duoAvatar') {
+        newBlock.leftAvatar = '';
+        newBlock.rightAvatar = '';
+        newBlock.leftName = '';
+        newBlock.rightName = '';
+        newBlock.centerIcon = 'favorite';
+        newBlock.centerText = '';
+        newBlock.bottomText = '';
     }
     if (type === 'divider') {
         newBlock.icon = 'star';
@@ -888,6 +926,8 @@ function renderBlock(block) {
         social: renderSocialBlock,
         text: renderTextBlock,
         image: renderImageBlock,
+        avatarCircle: renderAvatarCircleBlock,
+        duoAvatar: renderDuoAvatarBlock,
         links: renderLinksBlock,
         divider: renderDividerBlock,
         html: renderHtmlBlock
@@ -1070,6 +1110,51 @@ function renderHtmlBlock(block) {
     `;
 }
 
+function renderAvatarCircleBlock(block) {
+    const avatarSrc = block.avatarUrl || globalSettings.avatarData || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop';
+    
+    return `
+        <section id="${block.id}" class="parchment-card rounded-xl p-6 flex flex-col items-center justify-center">
+            <div class="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                <img src="${avatarSrc}" alt="Avatar" class="w-full h-full object-cover"/>
+            </div>
+            ${block.showName !== false ? `<p class="mt-4 font-bold text-lg">${block.name || globalSettings.name}</p>` : ''}
+            ${block.showTitle !== false ? `<p class="text-sm text-on-surface-variant">${block.title || globalSettings.title}</p>` : ''}
+        </section>
+    `;
+}
+
+function renderDuoAvatarBlock(block) {
+    const leftAvatar = block.leftAvatar || globalSettings.avatarData || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop';
+    const rightAvatar = block.rightAvatar || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop';
+    
+    return `
+        <section id="${block.id}" class="parchment-card rounded-xl p-6">
+            <div class="flex items-center justify-center gap-4">
+                <div class="flex flex-col items-center">
+                    <div class="w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                        <img src="${leftAvatar}" alt="Left Avatar" class="w-full h-full object-cover"/>
+                    </div>
+                    <p class="mt-2 font-bold text-sm">${block.leftName || globalSettings.name}</p>
+                </div>
+                
+                <div class="flex flex-col items-center px-4">
+                    <span class="material-symbols-outlined text-3xl text-primary">${block.centerIcon || 'favorite'}</span>
+                    <p class="text-xs text-on-surface-variant mt-1">${block.centerText || ''}</p>
+                </div>
+                
+                <div class="flex flex-col items-center">
+                    <div class="w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                        <img src="${rightAvatar}" alt="Right Avatar" class="w-full h-full object-cover"/>
+                    </div>
+                    <p class="mt-2 font-bold text-sm">${block.rightName || 'Partner'}</p>
+                </div>
+            </div>
+            ${block.bottomText ? `<p class="text-center mt-4 text-sm text-on-surface-variant">${block.bottomText}</p>` : ''}
+        </section>
+    `;
+}
+
 function openBlockLibrary() {
     document.getElementById('block-library-modal').classList.remove('hidden');
 }
@@ -1204,6 +1289,73 @@ function editBlock(blockId) {
         `;
     }
     
+    if (block.type === 'avatarCircle') {
+        settingsHtml += `
+            <div>
+                <label class="text-sm text-on-surface-variant block mb-1">頭貼圖片 URL</label>
+                <input type="url" id="block-avatar-url" value="${block.avatarUrl || ''}" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none" placeholder="留空則使用全域設定">
+            </div>
+            <div>
+                <label class="text-sm text-on-surface-variant block mb-1">顯示名稱</label>
+                <input type="text" id="block-avatar-name" value="${block.name || ''}" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none" placeholder="留空則使用全域設定">
+            </div>
+            <div>
+                <label class="text-sm text-on-surface-variant block mb-1">顯示職稱</label>
+                <input type="text" id="block-avatar-title" value="${block.title || ''}" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none" placeholder="留空則使用全域設定">
+            </div>
+            <div class="flex items-center gap-4">
+                <label class="text-sm text-on-surface-variant">顯示名稱</label>
+                <input type="checkbox" id="block-show-name" ${block.showName !== false ? 'checked' : ''} class="w-4 h-4">
+            </div>
+            <div class="flex items-center gap-4">
+                <label class="text-sm text-on-surface-variant">顯示職稱</label>
+                <input type="checkbox" id="block-show-title" ${block.showTitle !== false ? 'checked' : ''} class="w-4 h-4">
+            </div>
+        `;
+    }
+    
+    if (block.type === 'duoAvatar') {
+        settingsHtml += `
+            <div class="border-b border-outline-variant pb-3 mb-3">
+                <h4 class="font-bold text-sm mb-2">左側頭貼</h4>
+                <div>
+                    <label class="text-sm text-on-surface-variant block mb-1">圖片 URL</label>
+                    <input type="url" id="block-left-avatar" value="${block.leftAvatar || ''}" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none" placeholder="留空則使用全域設定">
+                </div>
+                <div>
+                    <label class="text-sm text-on-surface-variant block mb-1">名稱</label>
+                    <input type="text" id="block-left-name" value="${block.leftName || ''}" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none" placeholder="留空則使用全域設定">
+                </div>
+            </div>
+            <div class="border-b border-outline-variant pb-3 mb-3">
+                <h4 class="font-bold text-sm mb-2">中間區域</h4>
+                <div>
+                    <label class="text-sm text-on-surface-variant block mb-1">圖示（Material Symbols）</label>
+                    <input type="text" id="block-center-icon" value="${block.centerIcon || 'favorite'}" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none" placeholder="favorite, heart, etc.">
+                </div>
+                <div>
+                    <label class="text-sm text-on-surface-variant block mb-1">文字</label>
+                    <input type="text" id="block-center-text" value="${block.centerText || ''}" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+                </div>
+            </div>
+            <div class="border-b border-outline-variant pb-3 mb-3">
+                <h4 class="font-bold text-sm mb-2">右側頭貼</h4>
+                <div>
+                    <label class="text-sm text-on-surface-variant block mb-1">圖片 URL</label>
+                    <input type="url" id="block-right-avatar" value="${block.rightAvatar || ''}" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none" placeholder="https://...">
+                </div>
+                <div>
+                    <label class="text-sm text-on-surface-variant block mb-1">名稱</label>
+                    <input type="text" id="block-right-name" value="${block.rightName || ''}" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+                </div>
+            </div>
+            <div>
+                <label class="text-sm text-on-surface-variant block mb-1">底部文字</label>
+                <input type="text" id="block-bottom-text" value="${block.bottomText || ''}" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+            </div>
+        `;
+    }
+    
     if (block.type === 'html') {
         settingsHtml += `
             <div>
@@ -1259,6 +1411,24 @@ function saveBlockSettings() {
     
     if (currentEditingBlock.type === 'divider') {
         currentEditingBlock.icon = document.getElementById('block-divider-icon').value;
+    }
+    
+    if (currentEditingBlock.type === 'avatarCircle') {
+        currentEditingBlock.avatarUrl = document.getElementById('block-avatar-url').value;
+        currentEditingBlock.name = document.getElementById('block-avatar-name').value;
+        currentEditingBlock.title = document.getElementById('block-avatar-title').value;
+        currentEditingBlock.showName = document.getElementById('block-show-name').checked;
+        currentEditingBlock.showTitle = document.getElementById('block-show-title').checked;
+    }
+    
+    if (currentEditingBlock.type === 'duoAvatar') {
+        currentEditingBlock.leftAvatar = document.getElementById('block-left-avatar').value;
+        currentEditingBlock.leftName = document.getElementById('block-left-name').value;
+        currentEditingBlock.centerIcon = document.getElementById('block-center-icon').value;
+        currentEditingBlock.centerText = document.getElementById('block-center-text').value;
+        currentEditingBlock.rightAvatar = document.getElementById('block-right-avatar').value;
+        currentEditingBlock.rightName = document.getElementById('block-right-name').value;
+        currentEditingBlock.bottomText = document.getElementById('block-bottom-text').value;
     }
     
     if (currentEditingBlock.type === 'html') {
