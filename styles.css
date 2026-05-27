@@ -48,3 +48,114 @@ section {
 section:hover {
     box-shadow: 0 0 0 2px rgba(23, 24, 24, 0.1);
 }
+
+.grid-canvas {
+    display: grid;
+    gap: 16px;
+    min-height: 400px;
+    position: relative;
+}
+
+.grid-canvas.editing {
+    background-image: 
+        linear-gradient(to right, rgba(116, 120, 120, 0.15) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(116, 120, 120, 0.15) 1px, transparent 1px);
+    background-size: calc(100% / var(--grid-cols)) 60px;
+}
+
+.grid-block {
+    position: relative;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    min-height: 60px;
+}
+
+.grid-block:hover {
+    border-color: var(--primary, #171818);
+}
+
+.grid-block.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+}
+
+.grid-block .resize-handle {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 24px;
+    height: 24px;
+    cursor: nwse-resize;
+    background: linear-gradient(135deg, transparent 50%, rgba(23, 24, 24, 0.3) 50%);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.grid-block:hover .resize-handle {
+    opacity: 1;
+}
+
+.grid-block .block-toolbar {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 10;
+}
+
+.grid-block:hover .block-toolbar {
+    opacity: 1;
+}
+
+.grid-block .block-toolbar button {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.grid-block .block-toolbar button:hover {
+    background: #171818;
+    color: white;
+}
+
+.grid-col-btn.active {
+    background: var(--primary, #171818);
+    color: white;
+}
+
+.empty-slot {
+    min-height: 60px;
+    border: 2px dashed rgba(116, 120, 120, 0.3);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.empty-slot:hover {
+    border-color: var(--primary, #171818);
+    background: rgba(23, 24, 24, 0.05);
+}
+
+.empty-slot .material-symbols-outlined {
+    color: rgba(116, 120, 120, 0.5);
+}
+
+.drop-placeholder {
+    border: 2px solid var(--primary, #171818);
+    background: rgba(23, 24, 24, 0.1);
+    border-radius: 12px;
+}

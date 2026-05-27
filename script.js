@@ -21,6 +21,8 @@ let globalSettings = {
 };
 
 let pageConfig = {
+    gridColumns: 6,
+    gap: 16,
     navItems: [
         { id: 'nav-1', label: 'Profile', icon: 'person', targetBlock: 'block-profile', isNewTab: false },
         { id: 'nav-2', label: 'Stats', icon: 'leaderboard', targetBlock: 'block-stats', isNewTab: false },
@@ -28,15 +30,19 @@ let pageConfig = {
         { id: 'nav-4', label: 'Social', icon: 'share', targetBlock: 'block-social', isNewTab: false }
     ],
     blocks: [
-        { id: 'block-profile', type: 'profile', title: 'Profile', visible: true },
-        { id: 'block-stats', type: 'stats', title: 'Statistics', visible: true },
-        { id: 'block-music', type: 'music', title: 'Now Playing', visible: true },
-        { id: 'block-works', type: 'works', title: 'Featured Works', visible: true },
-        { id: 'block-social', type: 'social', title: 'Social Connections', visible: true }
+        { id: 'block-profile', type: 'profile', title: 'Profile', visible: true, col: 1, colSpan: 4, rowSpan: 1 },
+        { id: 'block-stats', type: 'stats', title: 'Statistics', visible: true, col: 5, colSpan: 2, rowSpan: 1 },
+        { id: 'block-music', type: 'music', title: 'Now Playing', visible: true, col: 1, colSpan: 2, rowSpan: 1 },
+        { id: 'block-works', type: 'works', title: 'Featured Works', visible: true, col: 3, colSpan: 4, rowSpan: 2 },
+        { id: 'block-social', type: 'social', title: 'Social Connections', visible: true, col: 1, colSpan: 2, rowSpan: 1 }
     ]
 };
 
 let currentEditingBlock = null;
+let currentGridCols = 6;
+let currentGap = 16;
+let draggedBlock = null;
+let resizingBlock = null;
 
 const blockTypes = [
     { type: 'profile', name: '個人檔案', icon: 'person', description: '顯示大頭貼、姓名和簡介' },
@@ -53,11 +59,14 @@ const blockTypes = [
 
 function init() {
     loadFromStorage();
+    currentGridCols = pageConfig.gridColumns || 6;
+    currentGap = pageConfig.gap || 16;
     renderNavItems();
     renderBlocksList();
     renderBlockLibrary();
-    renderContent();
+    renderGridContent();
     applyGlobalStyles();
+    updateGridControls();
 }
 
 function loadFromStorage() {
@@ -125,6 +134,7 @@ function renderBlocksList() {
             <span class="material-symbols-outlined text-on-surface-variant cursor-grab">drag_indicator</span>
             <span class="material-symbols-outlined text-primary">${getBlockTypeIcon(block.type)}</span>
             <span class="flex-1 text-sm truncate">${block.title}</span>
+            <span class="text-xs text-on-surface-variant">${block.colSpan}×${block.rowSpan || 1}</span>
             <button onclick="toggleBlockVisibility('${block.id}')" class="material-symbols-outlined text-on-surface-variant hover:text-primary text-lg">${block.visible ? 'visibility' : 'visibility_off'}</button>
             <button onclick="editBlock('${block.id}')" class="material-symbols-outlined text-on-surface-variant hover:text-primary text-lg">edit</button>
             <button onclick="deleteBlock('${block.id}')" class="material-symbols-outlined text-error hover:text-primary text-lg">delete</button>
@@ -136,7 +146,7 @@ function renderBlocksList() {
         pageConfig.blocks.splice(toIndex, 0, block);
         saveToStorage();
         renderBlocksList();
-        renderContent();
+        renderGridContent();
     });
 }
 
@@ -191,6 +201,377 @@ function renderBlockLibrary() {
             <p class="text-xs text-on-surface-variant">${bt.description}</p>
         </div>
     `).join('');
+}
+
+function renderGridContent() {
+    const canvas = document.getElementById('grid-canvas');
+    if (!canvas) return;
+    
+    canvas.style.setProperty('--grid-cols', currentGridCols);
+    canvas.style.gridTemplateColumns = `repeat(${currentGridCols}, 1fr)`;
+    canvas.style.gap = `${currentGap}px`;
+    canvas.classList.add('editing');
+    
+    const visibleBlocks = pageConfig.blocks.filter(b => b.visible);
+    
+    canvas.innerHTML = visibleBlocks.map(block => {
+        const col = block.col || 1;
+        const colSpan = Math.min(block.colSpan || 1, currentGridCols - col + 1);
+        const rowSpan = block.rowSpan || 1;
+        
+        return `
+            <div class="grid-block parchment-card" 
+                 data-block-id="${block.id}"
+                 style="grid-column: ${col} / span ${colSpan}; grid-row: span ${rowSpan};"
+                 draggable="true">
+                <div class="block-toolbar">
+                    <button onclick="editBlock('${block.id}')" title="編輯">
+                        <span class="material-symbols-outlined text-sm">edit</span>
+                    </button>
+                    <button onclick="duplicateBlock('${block.id}')" title="複製">
+                        <span class="material-symbols-outlined text-sm">content_copy</span>
+                    </button>
+                    <button onclick="deleteBlock('${block.id}')" title="刪除">
+                        <span class="material-symbols-outlined text-sm">delete</span>
+                    </button>
+                </div>
+                <div class="block-content p-4 h-full">
+                    ${renderBlockContent(block)}
+                </div>
+                <div class="resize-handle" data-block-id="${block.id}"></div>
+            </div>
+        `;
+    }).join('');
+    
+    initBlockDragDrop(canvas);
+    initBlockResize(canvas);
+}
+
+function renderBlockContent(block) {
+    const renderers = {
+        profile: renderProfileBlockContent,
+        stats: renderStatsBlockContent,
+        music: renderMusicBlockContent,
+        works: renderWorksBlockContent,
+        social: renderSocialBlockContent,
+        text: renderTextBlockContent,
+        image: renderImageBlockContent,
+        links: renderLinksBlockContent,
+        divider: renderDividerBlockContent,
+        html: renderHtmlBlockContent
+    };
+    return renderers[block.type] ? renderers[block.type](block) : '';
+}
+
+function renderProfileBlockContent(block) {
+    const avatarSrc = globalSettings.avatarData || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop';
+    const skillsHtml = globalSettings.skills.slice(0, 3).map(s => `<span class="bg-surface-container px-2 py-0.5 rounded-full text-xs">${s}</span>`).join('');
+    
+    return `
+        <div class="flex flex-col items-center text-center gap-3 h-full justify-center">
+            <div class="w-20 h-20 rounded-xl overflow-hidden border-2 border-white shadow-md">
+                <img alt="Profile" class="w-full h-full object-cover" src="${avatarSrc}"/>
+            </div>
+            <div>
+                <h2 class="text-xl font-bold">${globalSettings.name}</h2>
+                <p class="text-sm text-on-surface-variant">${globalSettings.title}</p>
+            </div>
+            <div class="flex flex-wrap gap-1 justify-center">${skillsHtml}</div>
+        </div>
+    `;
+}
+
+function renderStatsBlockContent(block) {
+    return `
+        <div class="grid grid-cols-1 gap-2 h-full">
+            <div class="flex flex-col items-center justify-center p-2 bg-surface-container rounded-lg">
+                <span class="text-2xl font-bold">${globalSettings.projects}</span>
+                <span class="text-xs text-on-surface-variant">Projects</span>
+            </div>
+            <div class="flex flex-col items-center justify-center p-2 bg-surface-container rounded-lg">
+                <span class="text-2xl font-bold">${globalSettings.years}</span>
+                <span class="text-xs text-on-surface-variant">Years</span>
+            </div>
+            <div class="flex flex-col items-center justify-center p-2 bg-surface-container rounded-lg">
+                <span class="text-2xl font-bold">${globalSettings.connections}</span>
+                <span class="text-xs text-on-surface-variant">Links</span>
+            </div>
+        </div>
+    `;
+}
+
+function renderMusicBlockContent(block) {
+    return `
+        <div class="flex flex-col items-center justify-center h-full gap-2">
+            <span class="material-symbols-outlined text-4xl text-primary">music_note</span>
+            <p class="text-sm font-bold truncate w-full text-center">Song Title</p>
+            <p class="text-xs text-on-surface-variant truncate w-full text-center">Artist</p>
+        </div>
+    `;
+}
+
+function renderWorksBlockContent(block) {
+    const projects = block.projects || [
+        { name: 'Project 1', desc: 'Description', date: '2024', image: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=300&fit=crop', link: '' }
+    ];
+    
+    return `
+        <div class="flex flex-col h-full gap-2">
+            <h3 class="font-bold text-sm">${block.title}</h3>
+            <div class="grid grid-cols-2 gap-2 flex-1 overflow-auto">
+                ${projects.slice(0, 4).map(p => `
+                    <div class="bg-surface-container rounded-lg overflow-hidden">
+                        <div class="h-16 overflow-hidden">
+                            <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover">
+                        </div>
+                        <div class="p-2">
+                            <p class="text-xs font-bold truncate">${p.name}</p>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function renderSocialBlockContent(block) {
+    const socials = [
+        { name: 'GitHub', icon: 'code', url: globalSettings.github },
+        { name: 'LinkedIn', icon: 'work', url: globalSettings.linkedin },
+        { name: 'Email', icon: 'mail', url: globalSettings.email ? `mailto:${globalSettings.email}` : '' },
+        { name: 'Portfolio', icon: 'brush', url: globalSettings.portfolio }
+    ].filter(s => s.url);
+    
+    return `
+        <div class="flex flex-col h-full gap-2">
+            <h3 class="font-bold text-sm">${block.title}</h3>
+            <div class="grid grid-cols-2 gap-2 flex-1">
+                ${socials.map(s => `
+                    <a href="${s.url || '#'}" target="_blank" class="flex flex-col items-center justify-center p-2 bg-surface-container rounded-lg hover:bg-surface-container-high">
+                        <span class="material-symbols-outlined text-xl text-primary">${s.icon}</span>
+                        <span class="text-xs">${s.name}</span>
+                    </a>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function renderTextBlockContent(block) {
+    return `
+        <div class="h-full overflow-auto">
+            <div class="prose prose-sm max-w-none">${block.content || '<p class="text-on-surface-variant text-sm">點擊編輯...</p>'}</div>
+        </div>
+    `;
+}
+
+function renderImageBlockContent(block) {
+    return `
+        <div class="h-full overflow-hidden rounded-lg">
+            <img src="${block.imageUrl || 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800'}" alt="${block.alt || ''}" class="w-full h-full object-cover"/>
+        </div>
+    `;
+}
+
+function renderLinksBlockContent(block) {
+    const links = block.links || [{ label: 'Link 1', url: '#', icon: 'link' }];
+    return `
+        <div class="flex flex-col gap-1 h-full overflow-auto">
+            ${links.map(l => `
+                <a href="${l.url}" target="_blank" class="flex items-center gap-2 p-2 bg-surface-container rounded-lg hover:bg-surface-container-high text-sm">
+                    <span class="material-symbols-outlined text-primary text-lg">${l.icon || 'link'}</span>
+                    <span class="truncate">${l.label}</span>
+                </a>
+            `).join('')}
+        </div>
+    `;
+}
+
+function renderDividerBlockContent(block) {
+    return `
+        <div class="flex items-center gap-2 h-full justify-center">
+            <div class="h-px flex-1 bg-outline-variant"></div>
+            <span class="material-symbols-outlined text-outline">${block.icon || 'star'}</span>
+            <div class="h-px flex-1 bg-outline-variant"></div>
+        </div>
+    `;
+}
+
+function renderHtmlBlockContent(block) {
+    return block.html || '<div class="text-on-surface-variant text-sm">點擊編輯 HTML...</div>';
+}
+
+function initBlockDragDrop(canvas) {
+    const blocks = canvas.querySelectorAll('.grid-block');
+    
+    blocks.forEach(block => {
+        block.addEventListener('dragstart', (e) => {
+            draggedBlock = block;
+            block.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        });
+        
+        block.addEventListener('dragend', () => {
+            block.classList.remove('dragging');
+            draggedBlock = null;
+            canvas.querySelectorAll('.drop-placeholder').forEach(p => p.remove());
+        });
+    });
+    
+    canvas.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        if (!draggedBlock) return;
+        
+        const rect = canvas.getBoundingClientRect();
+        const colWidth = rect.width / currentGridCols;
+        const x = e.clientX - rect.left;
+        const col = Math.min(Math.max(1, Math.floor(x / colWidth) + 1), currentGridCols);
+        
+        canvas.querySelectorAll('.drop-placeholder').forEach(p => p.remove());
+        
+        const placeholder = document.createElement('div');
+        placeholder.className = 'drop-placeholder';
+        placeholder.style.gridColumn = `${col} / span 1`;
+        placeholder.style.gridRow = 'span 1';
+        placeholder.style.minHeight = '60px';
+        canvas.appendChild(placeholder);
+    });
+    
+    canvas.addEventListener('drop', (e) => {
+        e.preventDefault();
+        if (!draggedBlock) return;
+        
+        const rect = canvas.getBoundingClientRect();
+        const colWidth = rect.width / currentGridCols;
+        const x = e.clientX - rect.left;
+        const newCol = Math.min(Math.max(1, Math.floor(x / colWidth) + 1), currentGridCols);
+        
+        const blockId = draggedBlock.dataset.blockId;
+        const block = pageConfig.blocks.find(b => b.id === blockId);
+        if (block) {
+            const maxCol = currentGridCols - (block.colSpan || 1) + 1;
+            block.col = Math.min(newCol, maxCol);
+            saveToStorage();
+            renderGridContent();
+        }
+        
+        canvas.querySelectorAll('.drop-placeholder').forEach(p => p.remove());
+    });
+}
+
+function initBlockResize(canvas) {
+    const handles = canvas.querySelectorAll('.resize-handle');
+    
+    handles.forEach(handle => {
+        let startX, startY, startColSpan, startRowSpan;
+        
+        handle.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const blockEl = handle.closest('.grid-block');
+            const blockId = blockEl.dataset.blockId;
+            const block = pageConfig.blocks.find(b => b.id === blockId);
+            
+            if (!block) return;
+            
+            resizingBlock = block;
+            startX = e.clientX;
+            startY = e.clientY;
+            startColSpan = block.colSpan || 1;
+            startRowSpan = block.rowSpan || 1;
+            
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+        
+        function onMouseMove(e) {
+            if (!resizingBlock) return;
+            
+            const deltaX = e.clientX - startX;
+            const deltaY = e.clientY - startY;
+            
+            const canvasRect = canvas.getBoundingClientRect();
+            const colWidth = canvasRect.width / currentGridCols;
+            const rowHeight = 60;
+            
+            const colDelta = Math.round(deltaX / colWidth);
+            const rowDelta = Math.round(deltaY / rowHeight);
+            
+            const newColSpan = Math.max(1, Math.min(currentGridCols - (resizingBlock.col || 1) + 1, startColSpan + colDelta));
+            const newRowSpan = Math.max(1, Math.min(4, startRowSpan + rowDelta));
+            
+            resizingBlock.colSpan = newColSpan;
+            resizingBlock.rowSpan = newRowSpan;
+            
+            const blockEl = canvas.querySelector(`[data-block-id="${resizingBlock.id}"]`);
+            if (blockEl) {
+                blockEl.style.gridColumn = `${resizingBlock.col} / span ${newColSpan}`;
+                blockEl.style.gridRow = `span ${newRowSpan}`;
+            }
+        }
+        
+        function onMouseUp() {
+            if (resizingBlock) {
+                saveToStorage();
+                renderBlocksList();
+            }
+            resizingBlock = null;
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        }
+    });
+}
+
+function setGridColumns(cols) {
+    currentGridCols = cols;
+    pageConfig.gridColumns = cols;
+    
+    pageConfig.blocks.forEach(block => {
+        if ((block.col || 1) + (block.colSpan || 1) - 1 > cols) {
+            block.colSpan = Math.min(block.colSpan || 1, cols - (block.col || 1) + 1);
+        }
+    });
+    
+    saveToStorage();
+    renderGridContent();
+    updateGridControls();
+}
+
+function updateGridControls() {
+    document.querySelectorAll('.grid-col-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.cols) === currentGridCols);
+    });
+    
+    const gapValue = document.getElementById('gap-value');
+    if (gapValue) gapValue.textContent = `${currentGap}px`;
+}
+
+function toggleGap() {
+    const gaps = [8, 16, 24, 32];
+    const currentIndex = gaps.indexOf(currentGap);
+    currentGap = gaps[(currentIndex + 1) % gaps.length];
+    pageConfig.gap = currentGap;
+    saveToStorage();
+    renderGridContent();
+    updateGridControls();
+}
+
+function duplicateBlock(blockId) {
+    const block = pageConfig.blocks.find(b => b.id === blockId);
+    if (!block) return;
+    
+    const newBlock = {
+        ...JSON.parse(JSON.stringify(block)),
+        id: `block-${Date.now()}`,
+        title: `${block.title} (copy)`,
+        col: Math.min((block.col || 1) + 1, currentGridCols)
+    };
+    
+    pageConfig.blocks.push(newBlock);
+    saveToStorage();
+    renderBlocksList();
+    renderGridContent();
 }
 
 function renderContent() {
@@ -430,11 +811,30 @@ function closeBlockLibrary() {
 function addBlock(type) {
     const id = `block-${Date.now()}`;
     const bt = blockTypes.find(b => b.type === type);
+    
+    const occupiedCols = pageConfig.blocks
+        .filter(b => b.visible)
+        .map(b => ({ col: b.col || 1, span: b.colSpan || 1 }));
+    
+    let newCol = 1;
+    for (let c = 1; c <= currentGridCols; c++) {
+        const isOccupied = occupiedCols.some(o => c >= o.col && c < o.col + o.span);
+        if (!isOccupied) {
+            newCol = c;
+            break;
+        }
+    }
+    
+    const defaultSpan = type === 'profile' ? 2 : type === 'works' ? 4 : type === 'stats' ? 2 : 1;
+    
     const newBlock = {
         id,
         type,
         title: bt ? bt.name : 'New Block',
-        visible: true
+        visible: true,
+        col: newCol,
+        colSpan: Math.min(defaultSpan, currentGridCols),
+        rowSpan: 1
     };
     
     if (type === 'works') {
@@ -461,7 +861,7 @@ function addBlock(type) {
     pageConfig.blocks.push(newBlock);
     saveToStorage();
     renderBlocksList();
-    renderContent();
+    renderGridContent();
     closeBlockLibrary();
 }
 
@@ -477,6 +877,20 @@ function editBlock(blockId) {
             <div>
                 <label class="text-sm text-on-surface-variant block mb-1">區塊標題</label>
                 <input type="text" id="block-title" value="${block.title}" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-sm text-on-surface-variant block mb-1">起始欄位 (1-${currentGridCols})</label>
+                    <input type="number" id="block-col" value="${block.col || 1}" min="1" max="${currentGridCols}" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+                </div>
+                <div>
+                    <label class="text-sm text-on-surface-variant block mb-1">欄位寬度 (1-${currentGridCols})</label>
+                    <input type="number" id="block-colspan" value="${block.colSpan || 1}" min="1" max="${currentGridCols}" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+                </div>
+                <div>
+                    <label class="text-sm text-on-surface-variant block mb-1">高度倍數 (1-4)</label>
+                    <input type="number" id="block-rowspan" value="${block.rowSpan || 1}" min="1" max="4" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+                </div>
             </div>
     `;
     
@@ -577,6 +991,14 @@ function saveBlockSettings() {
     
     currentEditingBlock.title = document.getElementById('block-title').value;
     
+    const colInput = document.getElementById('block-col');
+    const colspanInput = document.getElementById('block-colspan');
+    const rowspanInput = document.getElementById('block-rowspan');
+    
+    if (colInput) currentEditingBlock.col = Math.max(1, Math.min(currentGridCols, parseInt(colInput.value) || 1));
+    if (colspanInput) currentEditingBlock.colSpan = Math.max(1, Math.min(currentGridCols, parseInt(colspanInput.value) || 1));
+    if (rowspanInput) currentEditingBlock.rowSpan = Math.max(1, Math.min(4, parseInt(rowspanInput.value) || 1));
+    
     if (currentEditingBlock.type === 'works') {
         const projectDivs = document.querySelectorAll('#projects-editor > div');
         currentEditingBlock.projects = Array.from(projectDivs).map(div => ({
@@ -616,7 +1038,7 @@ function saveBlockSettings() {
     
     saveToStorage();
     renderBlocksList();
-    renderContent();
+    renderGridContent();
     closeBlockSettings();
 }
 
@@ -639,7 +1061,7 @@ function deleteBlock(blockId) {
     pageConfig.blocks = pageConfig.blocks.filter(b => b.id !== blockId);
     saveToStorage();
     renderBlocksList();
-    renderContent();
+    renderGridContent();
 }
 
 function toggleBlockVisibility(blockId) {
@@ -648,7 +1070,7 @@ function toggleBlockVisibility(blockId) {
         block.visible = !block.visible;
         saveToStorage();
         renderBlocksList();
-        renderContent();
+        renderGridContent();
     }
 }
 
@@ -853,13 +1275,18 @@ function generateExportHTML() {
         </a>
     `).join('');
     
-    const blocksHtml = pageConfig.blocks.filter(b => b.visible).map(block => renderBlock(block)).join('\n');
+    const blocksHtml = pageConfig.blocks.filter(b => b.visible).map(block => {
+        const col = block.col || 1;
+        const colSpan = block.colSpan || 1;
+        const rowSpan = block.rowSpan || 1;
+        return `<div id="${block.id}" style="grid-column: ${col} / span ${colSpan}; grid-row: span ${rowSpan};" class="parchment-card rounded-xl overflow-hidden">${renderBlockContent(block)}</div>`;
+    }).join('\n');
     
     return `<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>${globalSettings.name} | Personal Bio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=${globalSettings.headingFont.replace(' ', '+')}:wght@400;600;700&display=swap" rel="stylesheet"/>
@@ -883,8 +1310,10 @@ function generateExportHTML() {
     </nav>
     
     <main class="md:ml-64 min-h-screen">
-        <div class="max-w-4xl mx-auto px-8 py-8 space-y-8">
-            ${blocksHtml}
+        <div class="max-w-4xl mx-auto px-8 py-8">
+            <div class="grid-canvas" style="grid-template-columns: repeat(${pageConfig.gridColumns || 6}, 1fr); gap: ${pageConfig.gap || 16}px;">
+                ${blocksHtml}
+            </div>
         </div>
     </main>
     
@@ -900,6 +1329,28 @@ function generateExportCSS() {
     background-attachment: fixed;
     background-repeat: no-repeat;
     background-color: ${globalSettings.bgColor};
+}
+
+.grain-overlay {
+    position: fixed; inset: 0; pointer-events: none; z-index: 50; opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200'200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.parchment-card {
+    background-color: ${globalSettings.cardColor}bf;
+    backdrop-filter: blur(8px);
+    border: 1px solid #E8E2D6;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+.grid-canvas {
+    display: grid;
+    gap: ${pageConfig.gap || 16}px;
+}
+
+.material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+h1, h2, h3, h4, h5, h6 { font-family: '${globalSettings.headingFont}', serif; }
+body, p, span, div { font-family: '${globalSettings.bodyFont}', sans-serif; }`;
 }
 
 .grain-overlay {
@@ -949,6 +1400,9 @@ window.previewGlobalImage = previewGlobalImage;
 window.togglePreview = togglePreview;
 window.exportPackage = exportPackage;
 window.initDragDrop = initDragDrop;
+window.setGridColumns = setGridColumns;
+window.toggleGap = toggleGap;
+window.duplicateBlock = duplicateBlock;
 
 let initialized = false;
 
