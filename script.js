@@ -52,6 +52,8 @@ const blockTypes = [
     { type: 'social', name: '社群連結', icon: 'share', description: '社群媒體連結' },
     { type: 'text', name: '文字區塊', icon: 'article', description: '自訂文字內容' },
     { type: 'image', name: '圖片區塊', icon: 'image', description: '單張圖片展示' },
+    { type: 'avatarCircle', name: '圓形頭貼', icon: 'account_circle', description: '圓形大頭貼展示' },
+    { type: 'duoAvatar', name: '雙人頭貼', icon: 'people', description: 'O X O 排列的雙人頭貼' },
     { type: 'links', name: '連結列表', icon: 'link', description: '自訂連結按鈕列表' },
     { type: 'divider', name: '分隔線', icon: 'horizontal_rule', description: '視覺分隔區塊' },
     { type: 'html', name: '自訂 HTML', icon: 'code', description: '嵌入自訂 HTML 代碼' }
@@ -63,10 +65,29 @@ function init() {
     currentGap = pageConfig.gap || 16;
     renderNavItems();
     renderBlocksList();
-    renderBlockLibrary();
+    renderBlockLibrarySidebar();
     renderGridContent();
     applyGlobalStyles();
     updateGridControls();
+}
+
+function renderBlockLibrarySidebar() {
+    const container = document.getElementById('block-library-sidebar');
+    if (!container) return;
+    
+    container.innerHTML = blockTypes.map(bt => `
+        <div class="block-type-item bg-surface-container rounded-lg p-2 cursor-grab hover:bg-surface-container-high transition-colors flex items-center gap-2" draggable="true" data-block-type="${bt.type}" title="拖曳到右側新增">
+            <div class="w-10 h-10 bg-surface-container-high rounded flex items-center justify-center flex-shrink-0">
+                ${renderBlockTypePreviewMini(bt.type)}
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="font-bold text-xs truncate">${bt.name}</div>
+                <div class="text-[10px] text-on-surface-variant/70 truncate">${bt.description}</div>
+            </div>
+        </div>
+    `).join('');
+    
+    initBlockLibraryDrag();
 }
 
 function loadFromStorage() {
@@ -110,12 +131,19 @@ function saveToStorage() {
 function renderNavItems() {
     const container = document.getElementById('nav-items-container');
     container.innerHTML = pageConfig.navItems.map((item, index) => `
-        <div class="nav-item-editor bg-surface-container rounded-lg p-2 flex items-center gap-2 cursor-move" draggable="true" data-nav-id="${item.id}" data-index="${index}">
-            <span class="material-symbols-outlined text-on-surface-variant cursor-grab">drag_indicator</span>
-            <span class="material-symbols-outlined text-primary">${item.icon}</span>
-            <span class="flex-1 text-sm truncate">${item.label}</span>
-            <button onclick="editNavItem('${item.id}')" class="material-symbols-outlined text-on-surface-variant hover:text-primary text-lg">edit</button>
-            <button onclick="deleteNavItem('${item.id}')" class="material-symbols-outlined text-error hover:text-primary text-lg">delete</button>
+        <div class="nav-item-editor bg-surface-container rounded-lg overflow-hidden cursor-move" draggable="true" data-nav-id="${item.id}" data-index="${index}">
+            <div class="nav-preview h-12 bg-surface-container-high border-b border-outline-variant flex items-center justify-center">
+                <div class="flex items-center gap-2 px-3 py-1 bg-surface-container rounded-full">
+                    <span class="material-symbols-outlined text-primary text-sm">${item.icon}</span>
+                    <span class="text-xs">${item.label}</span>
+                </div>
+            </div>
+            <div class="p-2 flex items-center gap-1">
+                <span class="material-symbols-outlined text-on-surface-variant cursor-grab text-sm">drag_indicator</span>
+                <span class="flex-1 text-xs truncate text-on-surface-variant">${item.targetBlock || '未指定目標'}</span>
+                <button onclick="editNavItem('${item.id}')" class="material-symbols-outlined text-on-surface-variant hover:text-primary text-base">edit</button>
+                <button onclick="deleteNavItem('${item.id}')" class="material-symbols-outlined text-error hover:text-primary text-base">delete</button>
+            </div>
         </div>
     `).join('');
     
@@ -129,25 +157,219 @@ function renderNavItems() {
 
 function renderBlocksList() {
     const container = document.getElementById('blocks-list');
-    container.innerHTML = pageConfig.blocks.map((block, index) => `
-        <div class="block-item-editor bg-surface-container rounded-lg p-2 flex items-center gap-2 cursor-move ${!block.visible ? 'opacity-50' : ''}" draggable="true" data-block-id="${block.id}" data-index="${index}">
-            <span class="material-symbols-outlined text-on-surface-variant cursor-grab">drag_indicator</span>
-            <span class="material-symbols-outlined text-primary">${getBlockTypeIcon(block.type)}</span>
-            <span class="flex-1 text-sm truncate">${block.title}</span>
-            <span class="text-xs text-on-surface-variant">${block.colSpan}×${block.rowSpan || 1}</span>
-            <button onclick="toggleBlockVisibility('${block.id}')" class="material-symbols-outlined text-on-surface-variant hover:text-primary text-lg">${block.visible ? 'visibility' : 'visibility_off'}</button>
-            <button onclick="editBlock('${block.id}')" class="material-symbols-outlined text-on-surface-variant hover:text-primary text-lg">edit</button>
-            <button onclick="deleteBlock('${block.id}')" class="material-symbols-outlined text-error hover:text-primary text-lg">delete</button>
+    container.innerHTML = `
+        <div class="text-xs text-on-surface-variant/70 mb-2 px-1">拖曳到右側新增 | 拖曳邊緣調整寬度</div>
+    ` + pageConfig.blocks.map((block, index) => `
+        <div class="block-item-editor bg-surface-container rounded-lg overflow-hidden cursor-move ${!block.visible ? 'opacity-50' : ''}" draggable="true" data-block-id="${block.id}" data-index="${index}" title="雙擊切換顯示/隱藏">
+            <div class="block-preview h-20 bg-surface-container-high border-b border-outline-variant overflow-hidden relative">
+                ${renderBlockPreview(block)}
+                ${!block.visible ? '<div class="absolute inset-0 bg-surface-container-low/70 flex items-center justify-center"><span class="text-xs bg-outline/80 text-on-secondary px-2 py-1 rounded">隱藏</span></div>' : ''}
+            </div>
+            <div class="p-2 flex items-center gap-2">
+                <span class="material-symbols-outlined text-on-surface-variant cursor-grab text-sm">drag_indicator</span>
+                <span class="material-symbols-outlined text-primary text-sm">${getBlockTypeIcon(block.type)}</span>
+                <span class="flex-1 text-xs truncate">${block.title}</span>
+                <span class="text-[10px] text-on-surface-variant/60">${block.width || 12}/12</span>
+                <button onclick="toggleBlockVisibility('${block.id}')" class="material-symbols-outlined text-on-surface-variant hover:text-primary text-base">${block.visible ? 'visibility' : 'visibility_off'}</button>
+                <button onclick="editBlock('${block.id}')" class="material-symbols-outlined text-on-surface-variant hover:text-primary text-base">edit</button>
+                <button onclick="deleteBlock('${block.id}')" class="material-symbols-outlined text-error hover:text-primary text-base">delete</button>
+            </div>
         </div>
     `).join('');
     
-    initDragDrop(container, 'block', (fromIndex, toIndex) => {
-        const block = pageConfig.blocks.splice(fromIndex, 1)[0];
-        pageConfig.blocks.splice(toIndex, 0, block);
-        saveToStorage();
-        renderBlocksList();
-        renderGridContent();
+    initSidebarDragDrop(container);
+}
+
+function initSidebarDragDrop(container) {
+    container.querySelectorAll('[draggable="true"]').forEach(item => {
+        item.addEventListener('dragstart', (e) => {
+            const index = parseInt(item.dataset.index);
+            e.dataTransfer.setData('text/plain', index.toString());
+            e.dataTransfer.effectAllowed = 'move';
+            item.style.opacity = '0.5';
+            item.style.transform = 'scale(0.95)';
+        });
+        
+        item.addEventListener('dragend', () => {
+            item.style.opacity = '';
+            item.style.transform = '';
+            document.querySelectorAll('.block-drop-zone').forEach(zone => {
+                zone.querySelector('.drop-indicator').classList.remove('opacity-100');
+                zone.classList.remove('bg-primary/5', 'rounded-xl');
+            });
+        });
+        
+        item.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            item.style.borderTop = '2px solid var(--tw-colors-primary, #171818)';
+        });
+        
+        item.addEventListener('dragleave', () => {
+            item.style.borderTop = '';
+        });
+        
+        item.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            item.style.borderTop = '';
+            
+            const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+            const toIndex = parseInt(item.dataset.index);
+            
+            if (!isNaN(fromIndex) && !isNaN(toIndex) && fromIndex !== toIndex) {
+                const block = pageConfig.blocks.splice(fromIndex, 1)[0];
+                const adjustedIndex = fromIndex < toIndex ? toIndex - 1 : toIndex;
+                pageConfig.blocks.splice(adjustedIndex, 0, block);
+                saveToStorage();
+                renderBlocksList();
+                renderContent();
+            }
+        });
+        
+        item.addEventListener('dblclick', () => {
+            const blockId = item.dataset.blockId;
+            toggleBlockVisibility(blockId);
+        });
     });
+}
+
+function renderBlockPreview(block) {
+    const avatarSrc = globalSettings.avatarData || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop';
+    
+    const previews = {
+        profile: () => `
+            <div class="flex items-center gap-2 p-2 h-full">
+                <div class="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container">
+                    <img src="${avatarSrc}" class="w-full h-full object-cover"/>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="h-2 bg-on-surface/20 rounded w-3/4 mb-1"></div>
+                    <div class="h-1.5 bg-on-surface/10 rounded w-full mb-1"></div>
+                    <div class="h-1.5 bg-on-surface/10 rounded w-2/3"></div>
+                </div>
+            </div>
+        `,
+        stats: () => `
+            <div class="flex items-center justify-around h-full p-2">
+                <div class="text-center">
+                    <div class="text-lg font-bold">${globalSettings.projects}</div>
+                    <div class="text-[8px] text-on-surface-variant">Projects</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-lg font-bold">${globalSettings.years}</div>
+                    <div class="text-[8px] text-on-surface-variant">Years</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-lg font-bold">${globalSettings.connections}</div>
+                    <div class="text-[8px] text-on-surface-variant">Links</div>
+                </div>
+            </div>
+        `,
+        music: () => `
+            <div class="flex items-center h-full">
+                <div class="w-16 h-full bg-primary-container/30 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-2xl">music_note</span>
+                </div>
+                <div class="flex-1 p-2">
+                    <div class="h-2 bg-on-surface/20 rounded w-3/4 mb-1"></div>
+                    <div class="h-1.5 bg-on-surface/10 rounded w-1/2"></div>
+                </div>
+            </div>
+        `,
+        works: () => {
+            const projects = block.projects || [];
+            const projectImg = projects[0]?.image || 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=300&fit=crop';
+            return `
+                <div class="flex gap-1 p-1 h-full">
+                    <div class="flex-1 bg-surface-container rounded overflow-hidden">
+                        <img src="${projectImg}" class="w-full h-full object-cover opacity-60"/>
+                    </div>
+                    <div class="flex-1 bg-surface-container rounded flex items-center justify-center">
+                        <span class="material-symbols-outlined text-on-surface-variant">menu_book</span>
+                    </div>
+                </div>
+            `;
+        },
+        social: () => `
+            <div class="flex items-center justify-center gap-2 h-full p-2">
+                <div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center">
+                    <span class="material-symbols-outlined text-sm">code</span>
+                </div>
+                <div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center">
+                    <span class="material-symbols-outlined text-sm">work</span>
+                </div>
+                <div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center">
+                    <span class="material-symbols-outlined text-sm">mail</span>
+                </div>
+                <div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center">
+                    <span class="material-symbols-outlined text-sm">brush</span>
+                </div>
+            </div>
+        `,
+        text: () => `
+            <div class="p-2 h-full">
+                <div class="h-1.5 bg-on-surface/20 rounded w-full mb-1"></div>
+                <div class="h-1.5 bg-on-surface/10 rounded w-5/6 mb-1"></div>
+                <div class="h-1.5 bg-on-surface/10 rounded w-4/6 mb-1"></div>
+                <div class="h-1.5 bg-on-surface/10 rounded w-full"></div>
+            </div>
+        `,
+        image: () => `
+            <div class="h-full bg-surface-container flex items-center justify-center">
+                <img src="${block.imageUrl || 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400'}" class="w-full h-full object-cover opacity-70"/>
+            </div>
+        `,
+        links: () => {
+            const links = block.links || [];
+            return `
+                <div class="flex flex-col gap-1 p-1 h-full">
+                    ${links.slice(0, 3).map(l => `
+                        <div class="flex-1 bg-surface-container rounded flex items-center px-2 gap-1">
+                            <span class="material-symbols-outlined text-[10px]">${l.icon || 'link'}</span>
+                            <div class="h-1.5 bg-on-surface/20 rounded flex-1"></div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        },
+        divider: () => `
+            <div class="flex items-center h-full px-4">
+                <div class="h-px flex-1 bg-outline-variant"></div>
+                <span class="material-symbols-outlined text-outline mx-2 text-sm">${block.icon || 'star'}</span>
+                <div class="h-px flex-1 bg-outline-variant"></div>
+            </div>
+        `,
+        html: () => `
+            <div class="flex items-center justify-center h-full bg-surface-container">
+                <span class="material-symbols-outlined text-2xl text-on-surface-variant">code</span>
+            </div>
+        `,
+        avatarCircle: () => `
+            <div class="flex flex-col items-center justify-center h-full p-2">
+                <div class="w-10 h-10 rounded-full bg-surface-container overflow-hidden">
+                    <img src="${block.avatarUrl || avatarSrc}" class="w-full h-full object-cover"/>
+                </div>
+                <div class="h-1.5 bg-on-surface/20 rounded w-2/3 mt-1"></div>
+            </div>
+        `,
+        duoAvatar: () => `
+            <div class="flex items-center justify-center h-full p-2 gap-2">
+                <div class="w-8 h-8 rounded-full bg-surface-container overflow-hidden">
+                    <img src="${block.leftAvatar || avatarSrc}" class="w-full h-full object-cover"/>
+                </div>
+                <span class="material-symbols-outlined text-sm text-primary">${block.centerIcon || 'favorite'}</span>
+                <div class="w-8 h-8 rounded-full bg-surface-container overflow-hidden">
+                    <img src="${block.rightAvatar || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop'}" class="w-full h-full object-cover"/>
+                </div>
+            </div>
+        `
+    };
+    
+    return previews[block.type] ? previews[block.type]() : `
+        <div class="flex items-center justify-center h-full">
+            <span class="material-symbols-outlined text-on-surface-variant">widget</span>
+        </div>
+    `;
 }
 
 function initDragDrop(container, type, callback) {
@@ -195,388 +417,527 @@ function getBlockTypeIcon(type) {
 function renderBlockLibrary() {
     const grid = document.getElementById('block-types-grid');
     grid.innerHTML = blockTypes.map(bt => `
-        <div onclick="addBlock('${bt.type}')" class="bg-surface-container rounded-xl p-4 cursor-pointer hover:border-primary border-2 border-transparent transition-colors">
-            <span class="material-symbols-outlined text-3xl text-primary mb-2">${bt.icon}</span>
-            <h4 class="font-bold">${bt.name}</h4>
-            <p class="text-xs text-on-surface-variant">${bt.description}</p>
+        <div class="block-type-item bg-surface-container rounded-xl overflow-hidden cursor-pointer hover:border-primary border-2 border-transparent transition-colors" draggable="true" data-block-type="${bt.type}">
+            <div class="h-24 bg-surface-container-high border-b border-outline-variant overflow-hidden">
+                ${renderBlockTypePreview(bt.type)}
+            </div>
+            <div class="p-3">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="material-symbols-outlined text-primary">${bt.icon}</span>
+                    <h4 class="font-bold text-sm">${bt.name}</h4>
+                </div>
+                <p class="text-xs text-on-surface-variant">${bt.description}</p>
+            </div>
         </div>
     `).join('');
+    
+    initBlockLibraryDrag();
+}
+
+function initBlockLibraryDrag() {
+    const items = document.querySelectorAll('.block-type-item');
+    
+    items.forEach(item => {
+        item.addEventListener('dragstart', (e) => {
+            const blockType = item.dataset.blockType;
+            e.dataTransfer.setData('text/plain', blockType);
+            e.dataTransfer.setData('application/block-type', blockType);
+            e.dataTransfer.effectAllowed = 'copy';
+            item.style.opacity = '0.5';
+        });
+        
+        item.addEventListener('dragend', () => {
+            item.style.opacity = '';
+        });
+        
+        item.addEventListener('click', () => {
+            addBlock(item.dataset.blockType);
+        });
+    });
+}
+
+function renderBlockTypePreview(type) {
+    const previews = {
+        profile: () => `
+            <div class="flex items-center gap-2 p-2 h-full">
+                <div class="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container">
+                    <span class="material-symbols-outlined w-full h-full flex items-center justify-center text-on-surface-variant">person</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="h-2 bg-on-surface/20 rounded w-3/4 mb-1"></div>
+                    <div class="h-1.5 bg-on-surface/10 rounded w-full mb-1"></div>
+                    <div class="h-1.5 bg-on-surface/10 rounded w-2/3"></div>
+                </div>
+            </div>
+        `,
+        stats: () => `
+            <div class="flex items-center justify-around h-full p-2">
+                <div class="text-center">
+                    <div class="text-xl font-bold">0</div>
+                    <div class="text-[8px] text-on-surface-variant">Projects</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-xl font-bold">0</div>
+                    <div class="text-[8px] text-on-surface-variant">Years</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-xl font-bold">0</div>
+                    <div class="text-[8px] text-on-surface-variant">Links</div>
+                </div>
+            </div>
+        `,
+        music: () => `
+            <div class="flex items-center h-full">
+                <div class="w-20 h-full bg-primary-container/30 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-2xl">music_note</span>
+                </div>
+                <div class="flex-1 p-2">
+                    <div class="h-2 bg-on-surface/20 rounded w-3/4 mb-1"></div>
+                    <div class="h-1.5 bg-on-surface/10 rounded w-1/2"></div>
+                    <div class="flex justify-center mt-2 gap-2">
+                        <span class="material-symbols-outlined text-xs">skip_previous</span>
+                        <span class="material-symbols-outlined text-xs">play_arrow</span>
+                        <span class="material-symbols-outlined text-xs">skip_next</span>
+                    </div>
+                </div>
+            </div>
+        `,
+        works: () => `
+            <div class="flex gap-1 p-1 h-full">
+                <div class="flex-1 bg-surface-container rounded overflow-hidden flex items-center justify-center">
+                    <span class="material-symbols-outlined text-on-surface-variant">image</span>
+                </div>
+                <div class="flex-1 bg-surface-container rounded flex items-center justify-center">
+                    <span class="material-symbols-outlined text-on-surface-variant">image</span>
+                </div>
+            </div>
+        `,
+        social: () => `
+            <div class="flex items-center justify-center gap-2 h-full p-2">
+                <div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center">
+                    <span class="material-symbols-outlined text-sm">code</span>
+                </div>
+                <div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center">
+                    <span class="material-symbols-outlined text-sm">work</span>
+                </div>
+                <div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center">
+                    <span class="material-symbols-outlined text-sm">mail</span>
+                </div>
+                <div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center">
+                    <span class="material-symbols-outlined text-sm">brush</span>
+                </div>
+            </div>
+        `,
+        text: () => `
+            <div class="p-2 h-full">
+                <div class="h-1.5 bg-on-surface/20 rounded w-full mb-1"></div>
+                <div class="h-1.5 bg-on-surface/10 rounded w-5/6 mb-1"></div>
+                <div class="h-1.5 bg-on-surface/10 rounded w-4/6 mb-1"></div>
+                <div class="h-1.5 bg-on-surface/10 rounded w-full mb-1"></div>
+                <div class="h-1.5 bg-on-surface/10 rounded w-3/4"></div>
+            </div>
+        `,
+        image: () => `
+            <div class="h-full bg-surface-container flex items-center justify-center">
+                <span class="material-symbols-outlined text-2xl text-on-surface-variant">image</span>
+            </div>
+        `,
+        links: () => `
+            <div class="flex flex-col gap-1 p-1 h-full">
+                <div class="flex-1 bg-surface-container rounded flex items-center px-2 gap-1">
+                    <span class="material-symbols-outlined text-[10px]">link</span>
+                    <div class="h-1.5 bg-on-surface/20 rounded flex-1"></div>
+                </div>
+                <div class="flex-1 bg-surface-container rounded flex items-center px-2 gap-1">
+                    <span class="material-symbols-outlined text-[10px]">link</span>
+                    <div class="h-1.5 bg-on-surface/20 rounded flex-1"></div>
+                </div>
+                <div class="flex-1 bg-surface-container rounded flex items-center px-2 gap-1">
+                    <span class="material-symbols-outlined text-[10px]">link</span>
+                    <div class="h-1.5 bg-on-surface/20 rounded flex-1"></div>
+                </div>
+            </div>
+        `,
+        divider: () => `
+            <div class="flex items-center h-full px-4">
+                <div class="h-px flex-1 bg-outline-variant"></div>
+                <span class="material-symbols-outlined text-outline mx-2 text-sm">star</span>
+                <div class="h-px flex-1 bg-outline-variant"></div>
+            </div>
+        `,
+        html: () => `
+            <div class="flex items-center justify-center h-full bg-surface-container">
+                <span class="material-symbols-outlined text-2xl text-on-surface-variant">code</span>
+            </div>
+        `
+    };
+    
+    return previews[type] ? previews[type]() : `
+        <div class="flex items-center justify-center h-full">
+            <span class="material-symbols-outlined text-on-surface-variant">widget</span>
+        </div>
+    `;
+}
+
+function renderBlockTypePreviewMini(type) {
+    const icons = {
+        profile: 'person',
+        stats: 'leaderboard',
+        music: 'music_note',
+        works: 'menu_book',
+        social: 'share',
+        text: 'article',
+        image: 'image',
+        avatarCircle: 'account_circle',
+        duoAvatar: 'people',
+        links: 'link',
+        divider: 'horizontal_rule',
+        html: 'code'
+    };
+    return `<span class="material-symbols-outlined text-primary text-lg">${icons[type] || 'widget'}</span>`;
+}
+
+function renderContent() {
+    renderGridContent();
 }
 
 function renderGridContent() {
-    const canvas = document.getElementById('grid-canvas');
-    if (!canvas) return;
-    
-    canvas.style.setProperty('--grid-cols', currentGridCols);
-    canvas.style.gridTemplateColumns = `repeat(${currentGridCols}, 1fr)`;
-    canvas.style.gap = `${currentGap}px`;
-    canvas.classList.add('editing');
+    const content = document.getElementById('content-area');
     
     const visibleBlocks = pageConfig.blocks.filter(b => b.visible);
     
-    canvas.innerHTML = visibleBlocks.map(block => {
-        const col = block.col || 1;
-        const colSpan = Math.min(block.colSpan || 1, currentGridCols - col + 1);
-        const rowSpan = block.rowSpan || 1;
-        
-        return `
-            <div class="grid-block parchment-card" 
-                 data-block-id="${block.id}"
-                 style="grid-column: ${col} / span ${colSpan}; grid-row: span ${rowSpan};"
-                 draggable="true">
-                <div class="block-toolbar">
-                    <button onclick="editBlock('${block.id}')" title="編輯">
-                        <span class="material-symbols-outlined text-sm">edit</span>
-                    </button>
-                    <button onclick="duplicateBlock('${block.id}')" title="複製">
-                        <span class="material-symbols-outlined text-sm">content_copy</span>
-                    </button>
-                    <button onclick="deleteBlock('${block.id}')" title="刪除">
-                        <span class="material-symbols-outlined text-sm">delete</span>
-                    </button>
+    if (visibleBlocks.length === 0) {
+        content.innerHTML = `
+            <div class="grid-canvas editing min-h-[400px]" style="--grid-cols: ${currentGridCols}; grid-template-columns: repeat(${currentGridCols}, 1fr); gap: ${currentGap}px;">
+                <div class="drop-zone-empty col-span-full min-h-[300px] border-2 border-dashed border-outline-variant rounded-xl flex flex-col items-center justify-center text-center p-8 transition-colors" id="empty-drop-zone">
+                    <span class="material-symbols-outlined text-6xl text-outline mb-4">add_box</span>
+                    <p class="text-on-surface-variant text-lg mb-2">拖曳左側區塊到這裡</p>
+                    <p class="text-sm text-on-surface-variant/70">從「新增區塊」區域拖曳過來即可新增</p>
                 </div>
-                <div class="block-content p-4 h-full">
-                    ${renderBlockContent(block)}
-                </div>
-                <div class="resize-handle" data-block-id="${block.id}"></div>
             </div>
         `;
-    }).join('');
+        initEmptyDropZone();
+        return;
+    }
     
-    initBlockDragDrop(canvas);
-    initBlockResize(canvas);
-}
-
-function renderBlockContent(block) {
-    const renderers = {
-        profile: renderProfileBlockContent,
-        stats: renderStatsBlockContent,
-        music: renderMusicBlockContent,
-        works: renderWorksBlockContent,
-        social: renderSocialBlockContent,
-        text: renderTextBlockContent,
-        image: renderImageBlockContent,
-        links: renderLinksBlockContent,
-        divider: renderDividerBlockContent,
-        html: renderHtmlBlockContent
-    };
-    return renderers[block.type] ? renderers[block.type](block) : '';
-}
-
-function renderProfileBlockContent(block) {
-    const avatarSrc = globalSettings.avatarData || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop';
-    const skillsHtml = globalSettings.skills.slice(0, 3).map(s => `<span class="bg-surface-container px-2 py-0.5 rounded-full text-xs">${s}</span>`).join('');
-    
-    return `
-        <div class="flex flex-col items-center text-center gap-3 h-full justify-center">
-            <div class="w-20 h-20 rounded-xl overflow-hidden border-2 border-white shadow-md">
-                <img alt="Profile" class="w-full h-full object-cover" src="${avatarSrc}"/>
-            </div>
-            <div>
-                <h2 class="text-xl font-bold">${globalSettings.name}</h2>
-                <p class="text-sm text-on-surface-variant">${globalSettings.title}</p>
-            </div>
-            <div class="flex flex-wrap gap-1 justify-center">${skillsHtml}</div>
-        </div>
-    `;
-}
-
-function renderStatsBlockContent(block) {
-    return `
-        <div class="grid grid-cols-1 gap-2 h-full">
-            <div class="flex flex-col items-center justify-center p-2 bg-surface-container rounded-lg">
-                <span class="text-2xl font-bold">${globalSettings.projects}</span>
-                <span class="text-xs text-on-surface-variant">Projects</span>
-            </div>
-            <div class="flex flex-col items-center justify-center p-2 bg-surface-container rounded-lg">
-                <span class="text-2xl font-bold">${globalSettings.years}</span>
-                <span class="text-xs text-on-surface-variant">Years</span>
-            </div>
-            <div class="flex flex-col items-center justify-center p-2 bg-surface-container rounded-lg">
-                <span class="text-2xl font-bold">${globalSettings.connections}</span>
-                <span class="text-xs text-on-surface-variant">Links</span>
-            </div>
-        </div>
-    `;
-}
-
-function renderMusicBlockContent(block) {
-    return `
-        <div class="flex flex-col items-center justify-center h-full gap-2">
-            <span class="material-symbols-outlined text-4xl text-primary">music_note</span>
-            <p class="text-sm font-bold truncate w-full text-center">Song Title</p>
-            <p class="text-xs text-on-surface-variant truncate w-full text-center">Artist</p>
-        </div>
-    `;
-}
-
-function renderWorksBlockContent(block) {
-    const projects = block.projects || [
-        { name: 'Project 1', desc: 'Description', date: '2024', image: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=300&fit=crop', link: '' }
-    ];
-    
-    return `
-        <div class="flex flex-col h-full gap-2">
-            <h3 class="font-bold text-sm">${block.title}</h3>
-            <div class="grid grid-cols-2 gap-2 flex-1 overflow-auto">
-                ${projects.slice(0, 4).map(p => `
-                    <div class="bg-surface-container rounded-lg overflow-hidden">
-                        <div class="h-16 overflow-hidden">
-                            <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover">
+    content.innerHTML = `
+        <div class="grid-canvas editing" id="grid-canvas" style="--grid-cols: ${currentGridCols}; grid-template-columns: repeat(${currentGridCols}, 1fr); gap: ${currentGap}px;">
+            ${visibleBlocks.map((block) => {
+                const globalIndex = pageConfig.blocks.findIndex(b => b.id === block.id);
+                const col = block.col || 1;
+                const colSpan = block.colSpan || Math.min(currentGridCols, (block.width ? Math.ceil(block.width / 2) : currentGridCols));
+                const rowSpan = block.rowSpan || 1;
+                return `
+                    <div class="grid-block parchment-card relative" data-block-id="${block.id}" data-index="${globalIndex}" 
+                         style="grid-column: ${col} / span ${colSpan}; grid-row: span ${rowSpan};" draggable="true">
+                        <div class="block-toolbar">
+                            <button onclick="editBlock('${block.id}')" title="編輯">
+                                <span class="material-symbols-outlined text-sm">edit</span>
+                            </button>
+                            <button onclick="duplicateBlock('${block.id}')" title="複製">
+                                <span class="material-symbols-outlined text-sm">content_copy</span>
+                            </button>
+                            <button onclick="deleteBlock('${block.id}')" title="刪除">
+                                <span class="material-symbols-outlined text-sm">delete</span>
+                            </button>
                         </div>
-                        <div class="p-2">
-                            <p class="text-xs font-bold truncate">${p.name}</p>
+                        <div class="block-content p-4 h-full overflow-auto">
+                            ${renderBlock(block)}
                         </div>
+                        <div class="resize-handle" data-block-id="${block.id}"></div>
                     </div>
-                `).join('')}
-            </div>
+                `;
+            }).join('')}
         </div>
     `;
-}
-
-function renderSocialBlockContent(block) {
-    const socials = [
-        { name: 'GitHub', icon: 'code', url: globalSettings.github },
-        { name: 'LinkedIn', icon: 'work', url: globalSettings.linkedin },
-        { name: 'Email', icon: 'mail', url: globalSettings.email ? `mailto:${globalSettings.email}` : '' },
-        { name: 'Portfolio', icon: 'brush', url: globalSettings.portfolio }
-    ].filter(s => s.url);
     
-    return `
-        <div class="flex flex-col h-full gap-2">
-            <h3 class="font-bold text-sm">${block.title}</h3>
-            <div class="grid grid-cols-2 gap-2 flex-1">
-                ${socials.map(s => `
-                    <a href="${s.url || '#'}" target="_blank" class="flex flex-col items-center justify-center p-2 bg-surface-container rounded-lg hover:bg-surface-container-high">
-                        <span class="material-symbols-outlined text-xl text-primary">${s.icon}</span>
-                        <span class="text-xs">${s.name}</span>
-                    </a>
-                `).join('')}
-            </div>
-        </div>
-    `;
+    initGridBlockDragDrop();
+    initGridBlockResize();
 }
 
-function renderTextBlockContent(block) {
-    return `
-        <div class="h-full overflow-auto">
-            <div class="prose prose-sm max-w-none">${block.content || '<p class="text-on-surface-variant text-sm">點擊編輯...</p>'}</div>
-        </div>
-    `;
-}
-
-function renderImageBlockContent(block) {
-    return `
-        <div class="h-full overflow-hidden rounded-lg">
-            <img src="${block.imageUrl || 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800'}" alt="${block.alt || ''}" class="w-full h-full object-cover"/>
-        </div>
-    `;
-}
-
-function renderLinksBlockContent(block) {
-    const links = block.links || [{ label: 'Link 1', url: '#', icon: 'link' }];
-    return `
-        <div class="flex flex-col gap-1 h-full overflow-auto">
-            ${links.map(l => `
-                <a href="${l.url}" target="_blank" class="flex items-center gap-2 p-2 bg-surface-container rounded-lg hover:bg-surface-container-high text-sm">
-                    <span class="material-symbols-outlined text-primary text-lg">${l.icon || 'link'}</span>
-                    <span class="truncate">${l.label}</span>
-                </a>
-            `).join('')}
-        </div>
-    `;
-}
-
-function renderDividerBlockContent(block) {
-    return `
-        <div class="flex items-center gap-2 h-full justify-center">
-            <div class="h-px flex-1 bg-outline-variant"></div>
-            <span class="material-symbols-outlined text-outline">${block.icon || 'star'}</span>
-            <div class="h-px flex-1 bg-outline-variant"></div>
-        </div>
-    `;
-}
-
-function renderHtmlBlockContent(block) {
-    return block.html || '<div class="text-on-surface-variant text-sm">點擊編輯 HTML...</div>';
-}
-
-function initBlockDragDrop(canvas) {
-    const blocks = canvas.querySelectorAll('.grid-block');
+function initEmptyDropZone() {
+    const emptyZone = document.getElementById('empty-drop-zone');
+    if (!emptyZone) return;
     
-    blocks.forEach(block => {
-        block.addEventListener('dragstart', (e) => {
-            draggedBlock = block;
-            block.classList.add('dragging');
-            e.dataTransfer.effectAllowed = 'move';
-        });
-        
-        block.addEventListener('dragend', () => {
-            block.classList.remove('dragging');
-            draggedBlock = null;
-            canvas.querySelectorAll('.drop-placeholder').forEach(p => p.remove());
-        });
+    emptyZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        if (e.dataTransfer.types.includes('application/block-type')) {
+            e.dataTransfer.dropEffect = 'copy';
+            emptyZone.classList.add('border-primary', 'bg-primary/5');
+        }
     });
     
-    canvas.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        if (!draggedBlock) return;
-        
-        const rect = canvas.getBoundingClientRect();
-        const colWidth = rect.width / currentGridCols;
-        const x = e.clientX - rect.left;
-        const col = Math.min(Math.max(1, Math.floor(x / colWidth) + 1), currentGridCols);
-        
-        canvas.querySelectorAll('.drop-placeholder').forEach(p => p.remove());
-        
-        const placeholder = document.createElement('div');
-        placeholder.className = 'drop-placeholder';
-        placeholder.style.gridColumn = `${col} / span 1`;
-        placeholder.style.gridRow = 'span 1';
-        placeholder.style.minHeight = '60px';
-        canvas.appendChild(placeholder);
+    emptyZone.addEventListener('dragleave', () => {
+        emptyZone.classList.remove('border-primary', 'bg-primary/5');
     });
     
-    canvas.addEventListener('drop', (e) => {
+    emptyZone.addEventListener('drop', (e) => {
         e.preventDefault();
-        if (!draggedBlock) return;
+        emptyZone.classList.remove('border-primary', 'bg-primary/5');
         
-        const rect = canvas.getBoundingClientRect();
-        const colWidth = rect.width / currentGridCols;
-        const x = e.clientX - rect.left;
-        const newCol = Math.min(Math.max(1, Math.floor(x / colWidth) + 1), currentGridCols);
-        
-        const blockId = draggedBlock.dataset.blockId;
-        const block = pageConfig.blocks.find(b => b.id === blockId);
-        if (block) {
-            const maxCol = currentGridCols - (block.colSpan || 1) + 1;
-            block.col = Math.min(newCol, maxCol);
+        const blockType = e.dataTransfer.getData('application/block-type');
+        if (blockType) {
+            const newBlock = createBlockByType(blockType);
+            pageConfig.blocks.push(newBlock);
             saveToStorage();
-            renderGridContent();
+            renderBlocksList();
+            renderContent();
+        }
+    });
+}
+
+function initContentDropZones() {
+    const contentArea = document.getElementById('content-area');
+    
+    const dropZones = contentArea.querySelectorAll('.block-drop-zone');
+    
+    dropZones.forEach((zone) => {
+        const blockId = zone.dataset.blockId;
+        const block = pageConfig.blocks.find(b => b.id === blockId);
+        const blockType = blockTypes.find(bt => bt.type === block?.type);
+        
+        if (block?.visible) {
+            const hoverOverlay = document.createElement('div');
+            hoverOverlay.className = 'absolute inset-0 bg-primary/0 hover:bg-primary/5 transition-colors cursor-pointer rounded-xl z-10';
+            hoverOverlay.innerHTML = `
+                <div class="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                    <span class="text-xs bg-primary text-on-secondary px-2 py-1 rounded-full">${blockType?.name || block?.type}</span>
+                </div>
+                <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 z-20">
+                    <span class="text-xs bg-surface-container/90 px-2 py-1 rounded-full text-on-surface-variant">拖曳邊緣調整寬度</span>
+                </div>
+                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
+                    <div class="bg-primary text-on-secondary px-4 py-2 rounded-full text-sm flex items-center gap-2 shadow-lg">
+                        <span class="material-symbols-outlined text-sm">edit</span>
+                        點擊編輯
+                    </div>
+                </div>
+            `;
+            
+            const blockContent = zone.querySelector('.block-content');
+            if (blockContent) {
+                blockContent.style.position = 'relative';
+                blockContent.appendChild(hoverOverlay);
+                blockContent.classList.add('group');
+                
+                hoverOverlay.addEventListener('click', (e) => {
+                    if (!e.target.closest('a') && !e.target.closest('button') && !e.target.closest('.resize-handle')) {
+                        editBlock(blockId);
+                    }
+                });
+            }
         }
         
-        canvas.querySelectorAll('.drop-placeholder').forEach(p => p.remove());
+        zone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const isBlockType = e.dataTransfer.types.includes('application/block-type');
+            e.dataTransfer.dropEffect = isBlockType ? 'copy' : 'move';
+            
+            const rect = zone.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const width = rect.width;
+            const threshold = width * 0.25;
+            
+            zone.classList.remove('drop-left', 'drop-right', 'drop-center');
+            
+            if (x < threshold) {
+                zone.classList.add('drop-left');
+            } else if (x > width - threshold) {
+                zone.classList.add('drop-right');
+            } else {
+                zone.classList.add('drop-center');
+            }
+        });
+        
+        zone.addEventListener('dragleave', (e) => {
+            zone.classList.remove('drop-left', 'drop-right', 'drop-center');
+        });
+        
+        zone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const rect = zone.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const width = rect.width;
+            const threshold = width * 0.25;
+            
+            const blockType = e.dataTransfer.getData('application/block-type');
+            const toIndex = parseInt(zone.dataset.index);
+            const targetBlock = pageConfig.blocks.find(b => b.id === zone.dataset.blockId);
+            const targetWidth = targetBlock?.width || 12;
+            
+            if (blockType) {
+                const newBlock = createBlockByType(blockType);
+                newBlock.width = 6;
+                
+                if (x < threshold) {
+                    pageConfig.blocks.splice(toIndex, 0, newBlock);
+                } else if (x > width - threshold) {
+                    pageConfig.blocks.splice(toIndex + 1, 0, newBlock);
+                } else {
+                    newBlock.width = Math.ceil(targetWidth / 2);
+                    if (targetWidth > 4) {
+                        targetBlock.width = Math.floor(targetWidth / 2);
+                    }
+                    pageConfig.blocks.splice(toIndex + 1, 0, newBlock);
+                }
+                
+                saveToStorage();
+                renderBlocksList();
+                renderContent();
+            } else {
+                const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+                
+                if (!isNaN(fromIndex) && !isNaN(toIndex) && fromIndex !== toIndex) {
+                    const block = pageConfig.blocks.splice(fromIndex, 1)[0];
+                    const adjustedIndex = fromIndex < toIndex ? toIndex - 1 : toIndex;
+                    pageConfig.blocks.splice(adjustedIndex, 0, block);
+                    saveToStorage();
+                    renderBlocksList();
+                    renderContent();
+                }
+            }
+            
+            zone.classList.remove('drop-left', 'drop-right', 'drop-center');
+        });
     });
+    
+    const bottomZone = contentArea.querySelector('.drop-zone-bottom');
+    if (bottomZone) {
+        bottomZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            if (e.dataTransfer.types.includes('application/block-type')) {
+                e.dataTransfer.dropEffect = 'copy';
+                bottomZone.classList.add('border-primary', 'bg-primary/5');
+                bottomZone.querySelector('span')?.classList.add('text-on-surface-variant');
+            }
+        });
+        
+        bottomZone.addEventListener('dragleave', () => {
+            bottomZone.classList.remove('border-primary', 'bg-primary/5');
+            bottomZone.querySelector('span')?.classList.remove('text-on-surface-variant');
+        });
+        
+        bottomZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            bottomZone.classList.remove('border-primary', 'bg-primary/5');
+            bottomZone.querySelector('span')?.classList.remove('text-on-surface-variant');
+            
+            const blockType = e.dataTransfer.getData('application/block-type');
+            if (blockType) {
+                const newBlock = createBlockByType(blockType);
+                newBlock.width = 12;
+                pageConfig.blocks.push(newBlock);
+                saveToStorage();
+                renderBlocksList();
+                renderContent();
+            }
+        });
+    }
 }
 
-function initBlockResize(canvas) {
-    const handles = canvas.querySelectorAll('.resize-handle');
+function initBlockResize() {
+    const handles = document.querySelectorAll('.resize-handle');
     
     handles.forEach(handle => {
-        let startX, startY, startColSpan, startRowSpan;
+        let startX = 0;
+        let startWidth = 0;
+        let block = null;
+        let direction = '';
         
         handle.addEventListener('mousedown', (e) => {
             e.preventDefault();
             e.stopPropagation();
             
-            const blockEl = handle.closest('.grid-block');
-            const blockId = blockEl.dataset.blockId;
-            const block = pageConfig.blocks.find(b => b.id === blockId);
-            
-            if (!block) return;
-            
-            resizingBlock = block;
+            const zone = handle.closest('.block-drop-zone');
+            block = pageConfig.blocks.find(b => b.id === zone.dataset.blockId);
+            direction = handle.dataset.direction;
             startX = e.clientX;
-            startY = e.clientY;
-            startColSpan = block.colSpan || 1;
-            startRowSpan = block.rowSpan || 1;
+            startWidth = block?.width || 12;
             
             document.addEventListener('mousemove', onMouseMove);
             document.addEventListener('mouseup', onMouseUp);
         });
         
         function onMouseMove(e) {
-            if (!resizingBlock) return;
+            if (!block) return;
             
-            const deltaX = e.clientX - startX;
-            const deltaY = e.clientY - startY;
+            const container = document.querySelector('.grid-blocks-container');
+            const containerWidth = container.offsetWidth;
+            const colWidth = containerWidth / 12;
+            const diff = e.clientX - startX;
+            const colDiff = Math.round(diff / colWidth);
             
-            const canvasRect = canvas.getBoundingClientRect();
-            const colWidth = canvasRect.width / currentGridCols;
-            const rowHeight = 60;
+            if (direction === 'right') {
+                block.width = Math.max(3, Math.min(12, startWidth + colDiff));
+            } else {
+                block.width = Math.max(3, Math.min(12, startWidth - colDiff));
+            }
             
-            const colDelta = Math.round(deltaX / colWidth);
-            const rowDelta = Math.round(deltaY / rowHeight);
-            
-            const newColSpan = Math.max(1, Math.min(currentGridCols - (resizingBlock.col || 1) + 1, startColSpan + colDelta));
-            const newRowSpan = Math.max(1, Math.min(4, startRowSpan + rowDelta));
-            
-            resizingBlock.colSpan = newColSpan;
-            resizingBlock.rowSpan = newRowSpan;
-            
-            const blockEl = canvas.querySelector(`[data-block-id="${resizingBlock.id}"]`);
-            if (blockEl) {
-                blockEl.style.gridColumn = `${resizingBlock.col} / span ${newColSpan}`;
-                blockEl.style.gridRow = `span ${newRowSpan}`;
+            const zone = document.querySelector(`[data-block-id="${block.id}"]`);
+            if (zone) {
+                zone.style.gridColumn = `span ${block.width}`;
             }
         }
         
         function onMouseUp() {
-            if (resizingBlock) {
+            if (block) {
                 saveToStorage();
-                renderBlocksList();
             }
-            resizingBlock = null;
             document.removeEventListener('mousemove', onMouseMove);
             document.removeEventListener('mouseup', onMouseUp);
         }
     });
 }
 
-function setGridColumns(cols) {
-    currentGridCols = cols;
-    pageConfig.gridColumns = cols;
-    
-    pageConfig.blocks.forEach(block => {
-        if ((block.col || 1) + (block.colSpan || 1) - 1 > cols) {
-            block.colSpan = Math.min(block.colSpan || 1, cols - (block.col || 1) + 1);
-        }
-    });
-    
-    saveToStorage();
-    renderGridContent();
-    updateGridControls();
-}
-
-function updateGridControls() {
-    document.querySelectorAll('.grid-col-btn').forEach(btn => {
-        btn.classList.toggle('active', parseInt(btn.dataset.cols) === currentGridCols);
-    });
-    
-    const gapValue = document.getElementById('gap-value');
-    if (gapValue) gapValue.textContent = `${currentGap}px`;
-}
-
-function toggleGap() {
-    const gaps = [8, 16, 24, 32];
-    const currentIndex = gaps.indexOf(currentGap);
-    currentGap = gaps[(currentIndex + 1) % gaps.length];
-    pageConfig.gap = currentGap;
-    saveToStorage();
-    renderGridContent();
-    updateGridControls();
-}
-
-function duplicateBlock(blockId) {
-    const block = pageConfig.blocks.find(b => b.id === blockId);
-    if (!block) return;
-    
+function createBlockByType(type) {
+    const id = `block-${Date.now()}`;
+    const bt = blockTypes.find(b => b.type === type);
     const newBlock = {
-        ...JSON.parse(JSON.stringify(block)),
-        id: `block-${Date.now()}`,
-        title: `${block.title} (copy)`,
-        col: Math.min((block.col || 1) + 1, currentGridCols)
+        id,
+        type,
+        title: bt ? bt.name : 'New Block',
+        visible: true,
+        width: type === 'avatarCircle' ? 4 : (type === 'duoAvatar' ? 6 : 12)
     };
     
-    pageConfig.blocks.push(newBlock);
-    saveToStorage();
-    renderBlocksList();
-    renderGridContent();
-}
-
-function renderContent() {
-    const content = document.getElementById('content-area');
-    content.innerHTML = pageConfig.blocks.filter(b => b.visible).map(block => renderBlock(block)).join('');
+    if (type === 'works') {
+        newBlock.projects = [
+            { name: 'Project Name', desc: 'Description', date: '2024', image: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=300&fit=crop', link: '' }
+        ];
+    }
+    if (type === 'links') {
+        newBlock.links = [{ label: 'Link Name', url: '#', icon: 'link' }];
+    }
+    if (type === 'text') {
+        newBlock.content = '<p>Enter your text here...</p>';
+    }
+    if (type === 'image') {
+        newBlock.imageUrl = 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800';
+    }
+    if (type === 'avatarCircle') {
+        newBlock.avatarUrl = '';
+        newBlock.showName = true;
+        newBlock.showTitle = true;
+    }
+    if (type === 'duoAvatar') {
+        newBlock.leftAvatar = '';
+        newBlock.rightAvatar = '';
+        newBlock.leftName = '';
+        newBlock.rightName = '';
+        newBlock.centerIcon = 'favorite';
+        newBlock.centerText = '';
+        newBlock.bottomText = '';
+    }
+    if (type === 'divider') {
+        newBlock.icon = 'star';
+    }
+    if (type === 'html') {
+        newBlock.html = '<div class="parchment-card rounded-xl p-6">Custom HTML</div>';
+    }
+    
+    return newBlock;
 }
 
 function renderBlock(block) {
@@ -588,6 +949,8 @@ function renderBlock(block) {
         social: renderSocialBlock,
         text: renderTextBlock,
         image: renderImageBlock,
+        avatarCircle: renderAvatarCircleBlock,
+        duoAvatar: renderDuoAvatarBlock,
         links: renderLinksBlock,
         divider: renderDividerBlock,
         html: renderHtmlBlock
@@ -600,10 +963,7 @@ function renderProfileBlock(block) {
     const skillsHtml = globalSettings.skills.map(s => `<span class="bg-surface-container px-4 py-1 rounded-full text-sm">${s}</span>`).join('');
     
     return `
-        <section id="${block.id}" class="parchment-card rounded-xl p-6 md:p-8 flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8 relative group">
-            <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onclick="editBlock('${block.id}')" class="material-symbols-outlined text-on-surface-variant hover:text-primary">edit</button>
-            </div>
+        <section id="${block.id}" class="parchment-card rounded-xl p-6 md:p-8 flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8">
             <div class="relative">
                 <div class="w-32 h-32 md:w-48 md:h-48 rounded-2xl overflow-hidden border-4 border-white shadow-xl rotate-3 transition-transform hover:rotate-0">
                     <img alt="Profile" class="w-full h-full object-cover" src="${avatarSrc}"/>
@@ -621,10 +981,7 @@ function renderProfileBlock(block) {
 
 function renderStatsBlock(block) {
     return `
-        <section id="${block.id}" class="grid grid-cols-3 gap-4 md:gap-8 relative group">
-            <div class="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                <button onclick="editBlock('${block.id}')" class="material-symbols-outlined text-on-surface-variant hover:text-primary bg-surface-container rounded">edit</button>
-            </div>
+        <section id="${block.id}" class="grid grid-cols-3 gap-4 md:gap-8">
             <div class="parchment-card rounded-xl p-4 md:p-6 flex flex-col items-center text-center">
                 <span class="material-symbols-outlined text-outline mb-2 text-2xl">auto_stories</span>
                 <span class="text-2xl md:text-4xl font-bold">${globalSettings.projects}</span>
@@ -646,10 +1003,7 @@ function renderStatsBlock(block) {
 
 function renderMusicBlock(block) {
     return `
-        <section id="${block.id}" class="parchment-card rounded-xl overflow-hidden relative group">
-            <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                <button onclick="editBlock('${block.id}')" class="material-symbols-outlined text-on-surface-variant hover:text-primary bg-surface-container rounded">edit</button>
-            </div>
+        <section id="${block.id}" class="parchment-card rounded-xl overflow-hidden">
             <div class="h-32 bg-primary-container relative">
                 <div class="absolute inset-0 opacity-20 flex items-center justify-center">
                     <span class="material-symbols-outlined text-8xl">album</span>
@@ -678,10 +1032,7 @@ function renderWorksBlock(block) {
     ];
     
     return `
-        <section id="${block.id}" class="space-y-6 relative group">
-            <div class="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                <button onclick="editBlock('${block.id}')" class="material-symbols-outlined text-on-surface-variant hover:text-primary bg-surface-container rounded">edit</button>
-            </div>
+        <section id="${block.id}" class="space-y-6">
             <div class="flex items-center justify-between">
                 <h3 class="text-2xl font-bold">${block.title}</h3>
             </div>
@@ -715,10 +1066,7 @@ function renderSocialBlock(block) {
     ].filter(s => s.url);
     
     return `
-        <section id="${block.id}" class="parchment-card rounded-xl p-6 md:p-8 relative group">
-            <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onclick="editBlock('${block.id}')" class="material-symbols-outlined text-on-surface-variant hover:text-primary">edit</button>
-            </div>
+        <section id="${block.id}" class="parchment-card rounded-xl p-6 md:p-8">
             <h3 class="text-lg font-bold mb-6">${block.title}</h3>
             <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
                 ${socials.map(s => `
@@ -736,10 +1084,7 @@ function renderSocialBlock(block) {
 
 function renderTextBlock(block) {
     return `
-        <section id="${block.id}" class="parchment-card rounded-xl p-6 relative group">
-            <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onclick="editBlock('${block.id}')" class="material-symbols-outlined text-on-surface-variant hover:text-primary">edit</button>
-            </div>
+        <section id="${block.id}" class="parchment-card rounded-xl p-6">
             <div class="prose max-w-none">${block.content || '<p class="text-on-surface-variant">點擊編輯輸入文字內容...</p>'}</div>
         </section>
     `;
@@ -747,10 +1092,7 @@ function renderTextBlock(block) {
 
 function renderImageBlock(block) {
     return `
-        <section id="${block.id}" class="parchment-card rounded-xl overflow-hidden relative group">
-            <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                <button onclick="editBlock('${block.id}')" class="material-symbols-outlined text-on-surface-variant hover:text-primary bg-surface-container rounded">edit</button>
-            </div>
+        <section id="${block.id}" class="parchment-card rounded-xl overflow-hidden">
             <img src="${block.imageUrl || 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800'}" alt="${block.alt || ''}" class="w-full h-auto"/>
         </section>
     `;
@@ -759,10 +1101,7 @@ function renderImageBlock(block) {
 function renderLinksBlock(block) {
     const links = block.links || [{ label: 'Link 1', url: '#', icon: 'link' }];
     return `
-        <section id="${block.id}" class="space-y-3 relative group">
-            <div class="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onclick="editBlock('${block.id}')" class="material-symbols-outlined text-on-surface-variant hover:text-primary bg-surface-container rounded">edit</button>
-            </div>
+        <section id="${block.id}" class="space-y-3">
             ${links.map(l => `
                 <a href="${l.url}" target="_blank" class="parchment-card rounded-xl p-4 flex items-center gap-4 hover:border-primary transition-colors">
                     <span class="material-symbols-outlined text-primary">${l.icon || 'link'}</span>
@@ -776,10 +1115,7 @@ function renderLinksBlock(block) {
 
 function renderDividerBlock(block) {
     return `
-        <section id="${block.id}" class="py-4 relative group">
-            <div class="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onclick="editBlock('${block.id}')" class="material-symbols-outlined text-on-surface-variant hover:text-primary bg-surface-container rounded">edit</button>
-            </div>
+        <section id="${block.id}" class="py-4">
             <div class="flex items-center gap-4">
                 <div class="h-px flex-1 bg-outline-variant"></div>
                 <span class="material-symbols-outlined text-outline">${block.icon || 'star'}</span>
@@ -791,11 +1127,53 @@ function renderDividerBlock(block) {
 
 function renderHtmlBlock(block) {
     return `
-        <section id="${block.id}" class="relative group">
-            <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                <button onclick="editBlock('${block.id}')" class="material-symbols-outlined text-on-surface-variant hover:text-primary bg-surface-container rounded">edit</button>
-            </div>
+        <section id="${block.id}">
             ${block.html || '<div class="parchment-card rounded-xl p-6 text-on-surface-variant">點擊編輯輸入 HTML 代碼...</div>'}
+        </section>
+    `;
+}
+
+function renderAvatarCircleBlock(block) {
+    const avatarSrc = block.avatarUrl || globalSettings.avatarData || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop';
+    
+    return `
+        <section id="${block.id}" class="parchment-card rounded-xl p-6 flex flex-col items-center justify-center">
+            <div class="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                <img src="${avatarSrc}" alt="Avatar" class="w-full h-full object-cover"/>
+            </div>
+            ${block.showName !== false ? `<p class="mt-4 font-bold text-lg">${block.name || globalSettings.name}</p>` : ''}
+            ${block.showTitle !== false ? `<p class="text-sm text-on-surface-variant">${block.title || globalSettings.title}</p>` : ''}
+        </section>
+    `;
+}
+
+function renderDuoAvatarBlock(block) {
+    const leftAvatar = block.leftAvatar || globalSettings.avatarData || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop';
+    const rightAvatar = block.rightAvatar || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop';
+    
+    return `
+        <section id="${block.id}" class="parchment-card rounded-xl p-6">
+            <div class="flex items-center justify-center gap-4">
+                <div class="flex flex-col items-center">
+                    <div class="w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                        <img src="${leftAvatar}" alt="Left Avatar" class="w-full h-full object-cover"/>
+                    </div>
+                    <p class="mt-2 font-bold text-sm">${block.leftName || globalSettings.name}</p>
+                </div>
+                
+                <div class="flex flex-col items-center px-4">
+                    <span class="material-symbols-outlined text-3xl text-primary">${block.centerIcon || 'favorite'}</span>
+                    <p class="text-xs text-on-surface-variant mt-1">${block.centerText || ''}</p>
+                </div>
+                
+                <div class="flex flex-col items-center">
+                    <div class="w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                        <img src="${rightAvatar}" alt="Right Avatar" class="w-full h-full object-cover"/>
+                    </div>
+                    <p class="mt-2 font-bold text-sm">${block.rightName || 'Partner'}</p>
+                </div>
+            </div>
+            ${block.bottomText ? `<p class="text-center mt-4 text-sm text-on-surface-variant">${block.bottomText}</p>` : ''}
         </section>
     `;
 }
@@ -811,30 +1189,11 @@ function closeBlockLibrary() {
 function addBlock(type) {
     const id = `block-${Date.now()}`;
     const bt = blockTypes.find(b => b.type === type);
-    
-    const occupiedCols = pageConfig.blocks
-        .filter(b => b.visible)
-        .map(b => ({ col: b.col || 1, span: b.colSpan || 1 }));
-    
-    let newCol = 1;
-    for (let c = 1; c <= currentGridCols; c++) {
-        const isOccupied = occupiedCols.some(o => c >= o.col && c < o.col + o.span);
-        if (!isOccupied) {
-            newCol = c;
-            break;
-        }
-    }
-    
-    const defaultSpan = type === 'profile' ? 2 : type === 'works' ? 4 : type === 'stats' ? 2 : 1;
-    
     const newBlock = {
         id,
         type,
         title: bt ? bt.name : 'New Block',
-        visible: true,
-        col: newCol,
-        colSpan: Math.min(defaultSpan, currentGridCols),
-        rowSpan: 1
+        visible: true
     };
     
     if (type === 'works') {
@@ -861,7 +1220,7 @@ function addBlock(type) {
     pageConfig.blocks.push(newBlock);
     saveToStorage();
     renderBlocksList();
-    renderGridContent();
+    renderContent();
     closeBlockLibrary();
 }
 
@@ -877,20 +1236,6 @@ function editBlock(blockId) {
             <div>
                 <label class="text-sm text-on-surface-variant block mb-1">區塊標題</label>
                 <input type="text" id="block-title" value="${block.title}" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="text-sm text-on-surface-variant block mb-1">起始欄位 (1-${currentGridCols})</label>
-                    <input type="number" id="block-col" value="${block.col || 1}" min="1" max="${currentGridCols}" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
-                </div>
-                <div>
-                    <label class="text-sm text-on-surface-variant block mb-1">欄位寬度 (1-${currentGridCols})</label>
-                    <input type="number" id="block-colspan" value="${block.colSpan || 1}" min="1" max="${currentGridCols}" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
-                </div>
-                <div>
-                    <label class="text-sm text-on-surface-variant block mb-1">高度倍數 (1-4)</label>
-                    <input type="number" id="block-rowspan" value="${block.rowSpan || 1}" min="1" max="4" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
-                </div>
             </div>
     `;
     
@@ -967,6 +1312,73 @@ function editBlock(blockId) {
         `;
     }
     
+    if (block.type === 'avatarCircle') {
+        settingsHtml += `
+            <div>
+                <label class="text-sm text-on-surface-variant block mb-1">頭貼圖片 URL</label>
+                <input type="url" id="block-avatar-url" value="${block.avatarUrl || ''}" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none" placeholder="留空則使用全域設定">
+            </div>
+            <div>
+                <label class="text-sm text-on-surface-variant block mb-1">顯示名稱</label>
+                <input type="text" id="block-avatar-name" value="${block.name || ''}" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none" placeholder="留空則使用全域設定">
+            </div>
+            <div>
+                <label class="text-sm text-on-surface-variant block mb-1">顯示職稱</label>
+                <input type="text" id="block-avatar-title" value="${block.title || ''}" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none" placeholder="留空則使用全域設定">
+            </div>
+            <div class="flex items-center gap-4">
+                <label class="text-sm text-on-surface-variant">顯示名稱</label>
+                <input type="checkbox" id="block-show-name" ${block.showName !== false ? 'checked' : ''} class="w-4 h-4">
+            </div>
+            <div class="flex items-center gap-4">
+                <label class="text-sm text-on-surface-variant">顯示職稱</label>
+                <input type="checkbox" id="block-show-title" ${block.showTitle !== false ? 'checked' : ''} class="w-4 h-4">
+            </div>
+        `;
+    }
+    
+    if (block.type === 'duoAvatar') {
+        settingsHtml += `
+            <div class="border-b border-outline-variant pb-3 mb-3">
+                <h4 class="font-bold text-sm mb-2">左側頭貼</h4>
+                <div>
+                    <label class="text-sm text-on-surface-variant block mb-1">圖片 URL</label>
+                    <input type="url" id="block-left-avatar" value="${block.leftAvatar || ''}" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none" placeholder="留空則使用全域設定">
+                </div>
+                <div>
+                    <label class="text-sm text-on-surface-variant block mb-1">名稱</label>
+                    <input type="text" id="block-left-name" value="${block.leftName || ''}" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none" placeholder="留空則使用全域設定">
+                </div>
+            </div>
+            <div class="border-b border-outline-variant pb-3 mb-3">
+                <h4 class="font-bold text-sm mb-2">中間區域</h4>
+                <div>
+                    <label class="text-sm text-on-surface-variant block mb-1">圖示（Material Symbols）</label>
+                    <input type="text" id="block-center-icon" value="${block.centerIcon || 'favorite'}" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none" placeholder="favorite, heart, etc.">
+                </div>
+                <div>
+                    <label class="text-sm text-on-surface-variant block mb-1">文字</label>
+                    <input type="text" id="block-center-text" value="${block.centerText || ''}" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+                </div>
+            </div>
+            <div class="border-b border-outline-variant pb-3 mb-3">
+                <h4 class="font-bold text-sm mb-2">右側頭貼</h4>
+                <div>
+                    <label class="text-sm text-on-surface-variant block mb-1">圖片 URL</label>
+                    <input type="url" id="block-right-avatar" value="${block.rightAvatar || ''}" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none" placeholder="https://...">
+                </div>
+                <div>
+                    <label class="text-sm text-on-surface-variant block mb-1">名稱</label>
+                    <input type="text" id="block-right-name" value="${block.rightName || ''}" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+                </div>
+            </div>
+            <div>
+                <label class="text-sm text-on-surface-variant block mb-1">底部文字</label>
+                <input type="text" id="block-bottom-text" value="${block.bottomText || ''}" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:outline-none">
+            </div>
+        `;
+    }
+    
     if (block.type === 'html') {
         settingsHtml += `
             <div>
@@ -990,14 +1402,6 @@ function saveBlockSettings() {
     if (!currentEditingBlock) return;
     
     currentEditingBlock.title = document.getElementById('block-title').value;
-    
-    const colInput = document.getElementById('block-col');
-    const colspanInput = document.getElementById('block-colspan');
-    const rowspanInput = document.getElementById('block-rowspan');
-    
-    if (colInput) currentEditingBlock.col = Math.max(1, Math.min(currentGridCols, parseInt(colInput.value) || 1));
-    if (colspanInput) currentEditingBlock.colSpan = Math.max(1, Math.min(currentGridCols, parseInt(colspanInput.value) || 1));
-    if (rowspanInput) currentEditingBlock.rowSpan = Math.max(1, Math.min(4, parseInt(rowspanInput.value) || 1));
     
     if (currentEditingBlock.type === 'works') {
         const projectDivs = document.querySelectorAll('#projects-editor > div');
@@ -1032,13 +1436,31 @@ function saveBlockSettings() {
         currentEditingBlock.icon = document.getElementById('block-divider-icon').value;
     }
     
+    if (currentEditingBlock.type === 'avatarCircle') {
+        currentEditingBlock.avatarUrl = document.getElementById('block-avatar-url').value;
+        currentEditingBlock.name = document.getElementById('block-avatar-name').value;
+        currentEditingBlock.title = document.getElementById('block-avatar-title').value;
+        currentEditingBlock.showName = document.getElementById('block-show-name').checked;
+        currentEditingBlock.showTitle = document.getElementById('block-show-title').checked;
+    }
+    
+    if (currentEditingBlock.type === 'duoAvatar') {
+        currentEditingBlock.leftAvatar = document.getElementById('block-left-avatar').value;
+        currentEditingBlock.leftName = document.getElementById('block-left-name').value;
+        currentEditingBlock.centerIcon = document.getElementById('block-center-icon').value;
+        currentEditingBlock.centerText = document.getElementById('block-center-text').value;
+        currentEditingBlock.rightAvatar = document.getElementById('block-right-avatar').value;
+        currentEditingBlock.rightName = document.getElementById('block-right-name').value;
+        currentEditingBlock.bottomText = document.getElementById('block-bottom-text').value;
+    }
+    
     if (currentEditingBlock.type === 'html') {
         currentEditingBlock.html = document.getElementById('block-html-content').value;
     }
     
     saveToStorage();
     renderBlocksList();
-    renderGridContent();
+    renderContent();
     closeBlockSettings();
 }
 
@@ -1061,7 +1483,7 @@ function deleteBlock(blockId) {
     pageConfig.blocks = pageConfig.blocks.filter(b => b.id !== blockId);
     saveToStorage();
     renderBlocksList();
-    renderGridContent();
+    renderContent();
 }
 
 function toggleBlockVisibility(blockId) {
@@ -1070,7 +1492,7 @@ function toggleBlockVisibility(blockId) {
         block.visible = !block.visible;
         saveToStorage();
         renderBlocksList();
-        renderGridContent();
+        renderContent();
     }
 }
 
@@ -1224,13 +1646,13 @@ function togglePreview() {
     
     if (sidebar.classList.contains('hidden')) {
         sidebar.classList.remove('hidden');
-        main.classList.add('ml-64');
+        main.classList.add('ml-72');
         main.classList.remove('ml-0');
         toolbar.classList.remove('hidden');
         toggleText.textContent = '預覽';
     } else {
         sidebar.classList.add('hidden');
-        main.classList.remove('ml-64');
+        main.classList.remove('ml-72');
         main.classList.add('ml-0');
         toolbar.classList.add('hidden');
         toggleText.textContent = '編輯';
@@ -1275,18 +1697,13 @@ function generateExportHTML() {
         </a>
     `).join('');
     
-    const blocksHtml = pageConfig.blocks.filter(b => b.visible).map(block => {
-        const col = block.col || 1;
-        const colSpan = block.colSpan || 1;
-        const rowSpan = block.rowSpan || 1;
-        return `<div id="${block.id}" style="grid-column: ${col} / span ${colSpan}; grid-row: span ${rowSpan};" class="parchment-card rounded-xl overflow-hidden">${renderBlockContent(block)}</div>`;
-    }).join('\n');
+    const blocksHtml = pageConfig.blocks.filter(b => b.visible).map(block => renderBlock(block)).join('\n');
     
     return `<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>${globalSettings.name} | Personal Bio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=${globalSettings.headingFont.replace(' ', '+')}:wght@400;600;700&display=swap" rel="stylesheet"/>
@@ -1310,10 +1727,8 @@ function generateExportHTML() {
     </nav>
     
     <main class="md:ml-64 min-h-screen">
-        <div class="max-w-4xl mx-auto px-8 py-8">
-            <div class="grid-canvas" style="grid-template-columns: repeat(${pageConfig.gridColumns || 6}, 1fr); gap: ${pageConfig.gap || 16}px;">
-                ${blocksHtml}
-            </div>
+        <div class="max-w-4xl mx-auto px-8 py-8 space-y-8">
+            ${blocksHtml}
         </div>
     </main>
     
@@ -1329,28 +1744,6 @@ function generateExportCSS() {
     background-attachment: fixed;
     background-repeat: no-repeat;
     background-color: ${globalSettings.bgColor};
-}
-
-.grain-overlay {
-    position: fixed; inset: 0; pointer-events: none; z-index: 50; opacity: 0.03;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200'200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
-.parchment-card {
-    background-color: ${globalSettings.cardColor}bf;
-    backdrop-filter: blur(8px);
-    border: 1px solid #E8E2D6;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-}
-
-.grid-canvas {
-    display: grid;
-    gap: ${pageConfig.gap || 16}px;
-}
-
-.material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-h1, h2, h3, h4, h5, h6 { font-family: '${globalSettings.headingFont}', serif; }
-body, p, span, div { font-family: '${globalSettings.bodyFont}', sans-serif; }`;
 }
 
 .grain-overlay {
@@ -1403,6 +1796,188 @@ window.initDragDrop = initDragDrop;
 window.setGridColumns = setGridColumns;
 window.toggleGap = toggleGap;
 window.duplicateBlock = duplicateBlock;
+window.updateGridControls = updateGridControls;
+
+function initGridBlockDragDrop() {
+    const canvas = document.getElementById('grid-canvas');
+    if (!canvas) return;
+    
+    const blocks = canvas.querySelectorAll('.grid-block');
+    
+    blocks.forEach(block => {
+        block.addEventListener('dragstart', (e) => {
+            draggedBlock = block;
+            block.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', block.dataset.index);
+        });
+        
+        block.addEventListener('dragend', () => {
+            block.classList.remove('dragging');
+            draggedBlock = null;
+            canvas.querySelectorAll('.drop-placeholder').forEach(p => p.remove());
+        });
+    });
+    
+    canvas.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        if (!draggedBlock) return;
+        
+        const rect = canvas.getBoundingClientRect();
+        const colWidth = rect.width / currentGridCols;
+        const x = e.clientX - rect.left;
+        const col = Math.min(Math.max(1, Math.floor(x / colWidth) + 1), currentGridCols);
+        
+        canvas.querySelectorAll('.drop-placeholder').forEach(p => p.remove());
+        
+        const placeholder = document.createElement('div');
+        placeholder.className = 'drop-placeholder';
+        placeholder.style.gridColumn = `${col} / span 1`;
+        placeholder.style.gridRow = 'span 1';
+        placeholder.style.minHeight = '60px';
+        canvas.appendChild(placeholder);
+    });
+    
+    canvas.addEventListener('drop', (e) => {
+        e.preventDefault();
+        if (!draggedBlock) return;
+        
+        const rect = canvas.getBoundingClientRect();
+        const colWidth = rect.width / currentGridCols;
+        const x = e.clientX - rect.left;
+        const newCol = Math.min(Math.max(1, Math.floor(x / colWidth) + 1), currentGridCols);
+        
+        const blockId = draggedBlock.dataset.blockId;
+        const block = pageConfig.blocks.find(b => b.id === blockId);
+        if (block) {
+            const maxCol = currentGridCols - (block.colSpan || 1) + 1;
+            block.col = Math.min(newCol, maxCol);
+            saveToStorage();
+            renderBlocksList();
+            renderGridContent();
+        }
+        
+        canvas.querySelectorAll('.drop-placeholder').forEach(p => p.remove());
+    });
+}
+
+function initGridBlockResize() {
+    const canvas = document.getElementById('grid-canvas');
+    if (!canvas) return;
+    
+    const handles = canvas.querySelectorAll('.resize-handle');
+    
+    handles.forEach(handle => {
+        let startX, startY, startColSpan, startRowSpan;
+        
+        handle.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const blockEl = handle.closest('.grid-block');
+            const blockId = blockEl.dataset.blockId;
+            const block = pageConfig.blocks.find(b => b.id === blockId);
+            
+            if (!block) return;
+            
+            resizingBlock = block;
+            startX = e.clientX;
+            startY = e.clientY;
+            startColSpan = block.colSpan || 1;
+            startRowSpan = block.rowSpan || 1;
+            
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+        
+        function onMouseMove(e) {
+            if (!resizingBlock) return;
+            
+            const deltaX = e.clientX - startX;
+            const deltaY = e.clientY - startY;
+            
+            const canvasRect = canvas.getBoundingClientRect();
+            const colWidth = canvasRect.width / currentGridCols;
+            const rowHeight = 60;
+            
+            const colDelta = Math.round(deltaX / colWidth);
+            const rowDelta = Math.round(deltaY / rowHeight);
+            
+            const newColSpan = Math.max(1, Math.min(currentGridCols - (resizingBlock.col || 1) + 1, startColSpan + colDelta));
+            const newRowSpan = Math.max(1, Math.min(4, startRowSpan + rowDelta));
+            
+            resizingBlock.colSpan = newColSpan;
+            resizingBlock.rowSpan = newRowSpan;
+            
+            const blockEl = canvas.querySelector(`[data-block-id="${resizingBlock.id}"]`);
+            if (blockEl) {
+                blockEl.style.gridColumn = `${resizingBlock.col || 1} / span ${newColSpan}`;
+                blockEl.style.gridRow = `span ${newRowSpan}`;
+            }
+        }
+        
+        function onMouseUp() {
+            if (resizingBlock) {
+                saveToStorage();
+                renderBlocksList();
+            }
+            resizingBlock = null;
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        }
+    });
+}
+
+function setGridColumns(cols) {
+    currentGridCols = cols;
+    pageConfig.gridColumns = cols;
+    
+    pageConfig.blocks.forEach(block => {
+        if ((block.col || 1) + (block.colSpan || 1) - 1 > cols) {
+            block.colSpan = Math.min(block.colSpan || 1, cols - (block.col || 1) + 1);
+        }
+    });
+    
+    saveToStorage();
+    renderGridContent();
+    updateGridControls();
+}
+
+function updateGridControls() {
+    document.querySelectorAll('.grid-col-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.cols) === currentGridCols);
+    });
+    
+    const gapValue = document.getElementById('gap-value');
+    if (gapValue) gapValue.textContent = `${currentGap}px`;
+}
+
+function toggleGap() {
+    const gaps = [8, 16, 24, 32];
+    const currentIndex = gaps.indexOf(currentGap);
+    currentGap = gaps[(currentIndex + 1) % gaps.length];
+    pageConfig.gap = currentGap;
+    saveToStorage();
+    renderGridContent();
+    updateGridControls();
+}
+
+function duplicateBlock(blockId) {
+    const block = pageConfig.blocks.find(b => b.id === blockId);
+    if (!block) return;
+    
+    const newBlock = {
+        ...JSON.parse(JSON.stringify(block)),
+        id: `block-${Date.now()}`,
+        title: `${block.title} (copy)`,
+        col: Math.min((block.col || 1) + 1, currentGridCols)
+    };
+    
+    pageConfig.blocks.push(newBlock);
+    saveToStorage();
+    renderBlocksList();
+    renderGridContent();
+}
 
 let initialized = false;
 

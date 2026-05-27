@@ -47,7 +47,7 @@
     <div id="editor-toolbar" class="fixed top-0 left-0 right-0 h-12 bg-primary text-on-secondary flex items-center justify-between px-4 z-[200] shadow-lg">
         <div class="flex items-center gap-4">
             <span class="font-bold">Personal Bio Editor</span>
-            <span class="text-xs opacity-70">編輯模式</span>
+            <span class="text-xs opacity-70">樂高式編輯</span>
         </div>
         <div class="flex items-center gap-2">
             <button onclick="togglePreview()" class="px-3 py-1 bg-secondary-container text-on-secondary-container rounded text-sm hover:opacity-90">
@@ -65,8 +65,8 @@
         </div>
     </div>
     
-    <div id="sidebar-editor" class="fixed left-0 top-12 w-64 h-[calc(100vh-48px)] bg-surface-container-low border-r border-outline-variant overflow-y-auto z-[150]">
-        <div class="p-4">
+    <div id="sidebar-editor" class="fixed left-0 top-12 w-72 h-[calc(100vh-48px)] bg-surface-container-low border-r border-outline-variant overflow-y-auto z-[150]">
+        <div class="p-3">
             <h3 class="font-bold text-sm text-on-surface-variant mb-3 uppercase tracking-wider">導航項目</h3>
             <div id="nav-items-container" class="space-y-2"></div>
             <button onclick="addNavItem()" class="w-full mt-3 px-3 py-2 border-2 border-dashed border-outline-variant rounded-lg text-on-surface-variant text-sm hover:border-primary hover:text-primary transition-colors">
@@ -76,10 +76,10 @@
             
             <h3 class="font-bold text-sm text-on-surface-variant mb-3 mt-6 uppercase tracking-wider">頁面區塊</h3>
             <div id="blocks-list" class="space-y-2"></div>
-            <button onclick="openBlockLibrary()" class="w-full mt-3 px-3 py-2 bg-secondary-container text-on-secondary-container rounded-lg text-sm hover:opacity-90 transition-opacity">
-                <span class="material-symbols-outlined text-sm align-middle">add_box</span>
-                新增區塊
-            </button>
+            
+            <h3 class="font-bold text-sm text-on-surface-variant mb-3 mt-6 uppercase tracking-wider">新增區塊</h3>
+            <p class="text-xs text-on-surface-variant/70 mb-2">拖曳到右側新增</p>
+            <div id="block-library-sidebar" class="space-y-2"></div>
             
             <h3 class="font-bold text-sm text-on-surface-variant mb-3 mt-6 uppercase tracking-wider">佈局選項</h3>
             <div class="space-y-2">
@@ -91,7 +91,7 @@
         </div>
     </div>
     
-    <main id="page-content" class="ml-64 mt-12 min-h-screen pb-24">
+    <main id="page-content" class="ml-72 mt-12 min-h-screen pb-24">
         <div id="editor-controls" class="max-w-container-max mx-auto px-margin-desktop py-2 flex items-center gap-4 border-b border-outline-variant mb-4">
             <button onclick="setGridColumns(12)" class="grid-col-btn px-3 py-1 rounded text-sm hover:bg-surface-container-high" data-cols="12">12欄</button>
             <button onclick="setGridColumns(8)" class="grid-col-btn px-3 py-1 rounded text-sm hover:bg-surface-container-high" data-cols="8">8欄</button>
@@ -99,9 +99,7 @@
             <button onclick="setGridColumns(4)" class="grid-col-btn px-3 py-1 rounded text-sm hover:bg-surface-container-high" data-cols="4">4欄</button>
             <span class="text-xs text-on-surface-variant ml-4">拖曳區塊移動 | 拖曳右下角調整大小</span>
         </div>
-        <div id="content-area" class="max-w-container-max mx-auto px-margin-desktop py-4">
-            <div id="grid-canvas" class="grid-canvas relative"></div>
-        </div>
+        <div id="content-area" class="max-w-container-max mx-auto px-margin-desktop py-4"></div>
     </main>
     
     <div id="block-library-modal" class="fixed inset-0 z-[300] hidden">

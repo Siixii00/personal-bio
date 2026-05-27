@@ -51,8 +51,7 @@ section:hover {
 
 .grid-canvas {
     display: grid;
-    gap: 16px;
-    min-height: 400px;
+    min-height: 200px;
     position: relative;
 }
 
@@ -134,28 +133,22 @@ section:hover {
     color: white;
 }
 
-.empty-slot {
-    min-height: 60px;
-    border: 2px dashed rgba(116, 120, 120, 0.3);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.empty-slot:hover {
-    border-color: var(--primary, #171818);
-    background: rgba(23, 24, 24, 0.05);
-}
-
-.empty-slot .material-symbols-outlined {
-    color: rgba(116, 120, 120, 0.5);
-}
-
 .drop-placeholder {
     border: 2px solid var(--primary, #171818);
     background: rgba(23, 24, 24, 0.1);
     border-radius: 12px;
+    min-height: 60px;
+}
+
+.block-type-item:active {
+    cursor: grabbing;
+}
+
+.drop-zone-empty {
+    transition: all 0.3s ease;
+}
+
+.drop-zone-empty.drag-over {
+    border-color: #171818;
+    background-color: rgba(23, 24, 24, 0.05);
 }
